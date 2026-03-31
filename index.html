@@ -3,16 +3,27 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Garden Board — Supabase Sync v4</title>
+<title>Garden Board — Supabase Sync v5</title>
 <style>
 :root{--bg-1:#08100b;--bg-2:#0d1711;--panel:#132019;--panel-2:#17261d;--card:#223328;--card-2:#2a3d30;--line:#355240;--text:#eef7ef;--muted:#aec0b2;--accent:#9ed48a;--accent-2:#6ea96f;--danger:#d97272;--shadow:0 14px 34px rgba(0,0,0,.34)}
-*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top left, rgba(110,169,111,.12), transparent 28%),radial-gradient(circle at bottom right, rgba(158,212,138,.10), transparent 34%),linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%)}button,input,textarea,select{font:inherit}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top left, rgba(110,169,111,.12), transparent 28%),radial-gradient(circle at bottom right, rgba(158,212,138,.10), transparent 34%),linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%)}button,input,textarea,select{font:inherit}
 .page{max-width:780px;margin:0 auto;padding:14px 12px 36px;position:relative}.page::before,.page::after{content:"";position:fixed;width:120px;height:320px;pointer-events:none;opacity:.24;z-index:0}.page::before{left:-18px;top:22px;background:radial-gradient(circle at 58px 22px, rgba(158,212,138,.9) 0 10px, transparent 11px),radial-gradient(circle at 30px 72px, rgba(158,212,138,.75) 0 10px, transparent 11px),radial-gradient(circle at 74px 122px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 24px 178px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 76px 240px, rgba(158,212,138,.75) 0 10px, transparent 11px),linear-gradient(110deg, transparent 0 42px, rgba(110,169,111,.75) 43px 47px, transparent 48px 100%);transform:rotate(-4deg)}.page::after{right:-26px;bottom:80px;background:radial-gradient(circle at 64px 28px, rgba(158,212,138,.85) 0 10px, transparent 11px),radial-gradient(circle at 24px 86px, rgba(158,212,138,.75) 0 10px, transparent 11px),radial-gradient(circle at 78px 142px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 28px 206px, rgba(158,212,138,.72) 0 10px, transparent 11px),radial-gradient(circle at 82px 268px, rgba(158,212,138,.7) 0 10px, transparent 11px),linear-gradient(68deg, transparent 0 46px, rgba(110,169,111,.72) 47px 51px, transparent 52px 100%);transform:rotate(7deg)}.content{position:relative;z-index:1}
 .hero{background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)),repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0px, rgba(255,255,255,.022) 1px, transparent 1px, transparent 42px);background-color:var(--panel);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}.hero-top{padding:18px 16px 14px;position:relative}.hero-top::after{content:"🌿  🪴  🍃";position:absolute;right:14px;top:12px;font-size:20px;opacity:.95}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px}h1{margin:0;font-size:28px;line-height:1.05}.sub{margin:10px 0 0;max-width:560px;color:var(--muted);font-size:14px;line-height:1.5}
-.capture{position:sticky;top:0;z-index:3;padding:12px;backdrop-filter:blur(10px);background:linear-gradient(180deg, rgba(8,16,11,.92), rgba(8,16,11,.75));border-top:1px solid rgba(255,255,255,.04)}.capture-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.18)}.capture-input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-size:16px}.capture-input::placeholder{color:#91a392}.toggle{display:flex;gap:6px}.toggle button,.add-btn,.mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{appearance:none;border:none}.toggle button{background:#294033;color:#d7e5d8;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.05)}.toggle .active{background:var(--accent);color:#102012}.add-btn{background:var(--accent);color:#112014;border-radius:12px;width:36px;height:36px;font-size:22px;font-weight:700;line-height:1}.helper-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.helper{color:var(--muted);font-size:12px;line-height:1.45}.small-ghost{background:rgba(255,255,255,.04);color:#d7e5d8;border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:7px 12px;font-size:12px}
+.capture{position:sticky;top:0;z-index:3;padding:12px;backdrop-filter:blur(10px);background:linear-gradient(180deg, rgba(8,16,11,.92), rgba(8,16,11,.75));border-top:1px solid rgba(255,255,255,.04)}.capture-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.18)}.capture-input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-size:16px}.capture-input::placeholder{color:#91a392}.toggle{display:flex;gap:6px}.toggle button,.add-btn,.mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn,.panel-toggle,.filter-toggle{appearance:none;border:none}.toggle button{background:#294033;color:#d7e5d8;border-radius:999px;padding:10px 14px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.05)}.toggle .active{background:var(--accent);color:#102012}.add-btn{background:var(--accent);color:#112014;border-radius:14px;width:44px;height:44px;font-size:26px;font-weight:700;line-height:1}.helper-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.helper{color:var(--muted);font-size:12px;line-height:1.45}.small-ghost{background:rgba(255,255,255,.04);color:#d7e5d8;border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:8px 13px;font-size:12px}
 .status-pill{display:inline-block;margin-top:10px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
-.panel-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}.panel{background:var(--panel-2);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow);position:relative;overflow:hidden}.panel::after{content:"";position:absolute;inset:auto -26px -26px auto;width:120px;height:120px;background:radial-gradient(circle at 36px 36px, rgba(158,212,138,.12) 0 12px, transparent 13px),radial-gradient(circle at 70px 70px, rgba(158,212,138,.10) 0 12px, transparent 13px),linear-gradient(140deg, transparent 0 42px, rgba(110,169,111,.16) 43px 47px, transparent 48px 100%);transform:rotate(10deg);pointer-events:none}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.panel-title{margin:0;font-size:18px;font-weight:700}.count{font-size:12px;color:#dff0db;background:rgba(158,212,138,.12);border:1px solid rgba(158,212,138,.18);border-radius:999px;padding:5px 10px;white-space:nowrap}.empty{color:var(--muted);font-size:14px;padding:6px 4px 2px}
-.card{position:relative;background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));background-color:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:12px}.card:last-child{margin-bottom:0}.card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent-2))}.task-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-left:8px}.title{margin:0;font-size:16px;line-height:1.25}.owner{font-size:11px;padding:6px 9px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);background:#2c4033;color:#eef7ef}.owner.skye{background:rgba(210,230,203,.12);color:#e7f3e3}.meta{padding-left:8px;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}.meta-pill{background:var(--card-2);border:1px solid var(--line);color:var(--muted);font-size:12px;padding:6px 10px;border-radius:999px}.desc{padding-left:8px;margin:10px 0 0;color:#d7e5d9;font-size:14px;line-height:1.45;white-space:pre-wrap}.quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:6px 10px;font-size:11px}.small-btn{font-size:12px;padding:7px 10px}.icon-btn{width:30px;height:30px;padding:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}.small-btn.danger,.icon-btn.danger{color:#ffdede;background:rgba(217,114,114,.12);border-color:rgba(217,114,114,.2)}
+
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.filter-toggle{width:42px;height:42px;border-radius:999px;background:#294033;color:#eef7ef;display:inline-flex;align-items:center;justify-content:center;font-size:18px;border:1px solid rgba(255,255,255,.05)}
+.filter-chip{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:8px 12px;font-size:12px}
+.filter-chip.active{background:rgba(158,212,138,.18);color:#eff9ec;border-color:rgba(158,212,138,.28)}
+.search-wrap{display:none;margin-top:10px}
+.search-wrap.open{display:block}
+.search-input{width:100%;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:14px;padding:12px 14px;outline:none}
+
+.panel-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}.panel{background:var(--panel-2);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow);position:relative;overflow:hidden}.panel::after{content:"";position:absolute;inset:auto -26px -26px auto;width:120px;height:120px;background:radial-gradient(circle at 36px 36px, rgba(158,212,138,.12) 0 12px, transparent 13px),radial-gradient(circle at 70px 70px, rgba(158,212,138,.10) 0 12px, transparent 13px),linear-gradient(140deg, transparent 0 42px, rgba(110,169,111,.16) 43px 47px, transparent 48px 100%);transform:rotate(10deg);pointer-events:none}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.panel-title-wrap{display:flex;align-items:center;gap:10px}.panel-title{margin:0;font-size:18px;font-weight:700}.count{font-size:12px;color:#dff0db;background:rgba(158,212,138,.12);border:1px solid rgba(158,212,138,.18);border-radius:999px;padding:5px 10px;white-space:nowrap}.panel-toggle{width:40px;height:40px;border-radius:999px;background:#294033;color:#eef7ef;display:inline-flex;align-items:center;justify-content:center;font-size:18px;border:1px solid rgba(255,255,255,.05)}.panel-body.collapsed{display:none}.empty{color:var(--muted);font-size:14px;padding:6px 4px 2px}
+
+.card{position:relative;background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));background-color:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:12px;touch-action:pan-y;transition:transform .12s ease}.card:last-child{margin-bottom:0}.card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent-2))}.card.swiping{transition:none}.swipe-hint{position:absolute;right:14px;bottom:12px;font-size:11px;color:var(--muted);opacity:.85}
+.task-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-left:8px}.title{margin:0;font-size:16px;line-height:1.25}.owner{font-size:11px;padding:6px 9px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);background:#2c4033;color:#eef7ef}.owner.skye{background:rgba(210,230,203,.12);color:#e7f3e3}.meta{padding-left:8px;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}.meta-pill{background:var(--card-2);border:1px solid var(--line);color:var(--muted);font-size:12px;padding:6px 10px;border-radius:999px}.desc{padding-left:8px;margin:10px 0 0;color:#d7e5d9;font-size:14px;line-height:1.45;white-space:pre-wrap}.quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:10px 14px;font-size:13px}.small-btn{font-size:13px;padding:10px 14px}.icon-btn{width:42px;height:42px;padding:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:18px}.icon-btn.edit-btn{width:50px;height:50px;font-size:20px}.small-btn.danger,.icon-btn.danger{color:#ffdede;background:rgba(217,114,114,.12);border-color:rgba(217,114,114,.2)}
 .notes{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow)}.notes h2{margin:0 0 10px;font-size:18px}.notes-box{width:100%;background:rgba(255,255,255,.02);border:1px dashed #4d6a57;border-radius:16px;min-height:88px;padding:14px;color:var(--text);resize:vertical;outline:none}.toolbar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.footer-status{margin-top:10px;color:var(--muted);font-size:12px}
 .dialog-backdrop{position:fixed;inset:0;background:rgba(4,8,5,.62);display:none;align-items:flex-end;justify-content:center;z-index:40;padding:12px}.dialog-backdrop.open{display:flex}.dialog{width:min(760px,100%);max-height:min(88vh,900px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:16px}.dialog h3{margin:0 0 6px;font-size:22px}.dialog-sub{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.45}.form-grid{display:grid;gap:14px}.field label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:14px;padding:12px;outline:none}.field textarea{min-height:108px;resize:vertical}.row-2{display:grid;gap:12px;grid-template-columns:1fr 1fr}.dialog-actions{display:flex;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap}.actions-right{display:flex;gap:8px;flex-wrap:wrap}
 .section-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:18px;padding:12px}
@@ -26,7 +37,7 @@
 </head>
 <body>
 <div class="page"><div class="content">
-<section class="hero"><div class="hero-top"><div class="eyebrow">Shared Home Board</div><h1>Garden Board</h1><p class="sub">Supabase-backed shared board with resilient sync: Realtime when available, polling fallback when it is not.</p></div>
+<section class="hero"><div class="hero-top"><div class="eyebrow">Shared Home Board</div><h1>Garden Board</h1><p class="sub">Supabase-backed shared board with filtering, collapsible panels, larger touch targets, and swipe-to-advance task cards.</p></div>
 <div class="capture"><div class="capture-box">
 <input id="quickInput" class="capture-input" placeholder="Add task… e.g. Skye groceries tomorrow, Wes bins Tuesday morning" />
 <div class="toggle" id="ownerToggle"><button type="button" data-owner="Wes" class="active">Wes</button><button type="button" data-owner="Skye">Skye</button></div>
@@ -35,6 +46,19 @@
 <div class="helper-row">
   <div class="helper">Quick add creates a task in <strong>Upcoming</strong>. It detects owner and simple due words from what you type.</div>
   <button id="helpBtn" type="button" class="small-ghost">Quick add guide</button>
+</div>
+<div class="filter-bar">
+  <button id="searchToggleBtn" type="button" class="filter-toggle" aria-label="Show search">🔎</button>
+  <button type="button" class="filter-chip" data-filter-group="tag" data-filter-value="Kitchen">Kitchen</button>
+  <button type="button" class="filter-chip" data-filter-group="tag" data-filter-value="House">House</button>
+  <button type="button" class="filter-chip" data-filter-group="tag" data-filter-value="Family">Family</button>
+  <button type="button" class="filter-chip" data-filter-group="time" data-filter-value="Today">Today</button>
+  <button type="button" class="filter-chip" data-filter-group="time" data-filter-value="Tomorrow">Tomorrow</button>
+  <button type="button" class="filter-chip" data-filter-group="time" data-filter-value="This week">This week</button>
+  <button id="clearFiltersBtn" type="button" class="filter-chip">Clear filters</button>
+</div>
+<div id="searchWrap" class="search-wrap">
+  <input id="searchInput" class="search-input" placeholder="Search tasks, tags, owners, due text, or descriptions" />
 </div>
 <div id="syncStatus" class="status-pill">Sync status: checking config…</div>
 </div></section>
@@ -93,7 +117,7 @@
         <label for="editTaskDue">Free text due label</label>
         <input id="editTaskDue" type="text" placeholder="Today, tomorrow, Tuesday morning..." />
       </div>
-      <div class="chip-row" id="dueQuickButtons" style="margin-top:10px;">
+      <div class="chip-row" style="margin-top:10px;">
         <button type="button" class="chip-btn" data-due-chip="Today">Today</button>
         <button type="button" class="chip-btn" data-due-chip="Tomorrow">Tomorrow</button>
         <button type="button" class="chip-btn" data-due-chip="This week">This week</button>
@@ -108,7 +132,7 @@
         <label for="editTaskTag">Tag</label>
         <input id="editTaskTag" type="text" placeholder="Kitchen, Repair, Family..." />
       </div>
-      <div class="chip-row" id="tagQuickButtons" style="margin-top:10px;">
+      <div class="chip-row" style="margin-top:10px;">
         <button type="button" class="chip-btn" data-tag-chip="Kitchen">Kitchen</button>
         <button type="button" class="chip-btn" data-tag-chip="House">House</button>
         <button type="button" class="chip-btn" data-tag-chip="Family">Family</button>
@@ -140,6 +164,7 @@
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
 <li>Everything left over becomes the task title.</li>
+<li>You can swipe a task card left to move it to the next panel.</li>
 </ul>
 <div class="help-examples">
   <div class="example-chip">Skye groceries tomorrow</div>
@@ -158,10 +183,12 @@
 const SUPABASE_URL = "https://pssgbrtyhwoumhiynwlj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_Ew7XkaYZV2w9vzFndOAq3w_ND4G6JQM";
 const HOUSEHOLD_ID = "ca0ebdfc-f533-46d5-b8bb-1c6f6d0b6248";
-const NOTES_KEY = "garden-board-notes-sync-v4";
+const NOTES_KEY = "garden-board-notes-sync-v5";
+const PANEL_STATE_KEY = "garden-board-panel-state-v5";
 
 (() => {
 const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'waiting',title:'Waiting / Someday'},{key:'done',title:'Done'}];
+const DEFAULT_PANEL_STATE = {upcoming:true,inMotion:false,waiting:false,done:false};
 const DUE_PATTERNS=[
 [/\bday after tomorrow\b/i,'Day after tomorrow'],
 [/\btomorrow morning\b/i,'Tomorrow morning'],[/\btomorrow afternoon\b/i,'Tomorrow afternoon'],[/\btomorrow night\b/i,'Tomorrow night'],
@@ -184,11 +211,22 @@ const editBackdrop=$('editDialogBackdrop'), editTaskTitle=$('editTaskTitle'), ed
 const helpBackdrop=$('helpDialogBackdrop');
 const modalOwnerChips = document.getElementById('modalOwnerChips');
 const modalPanelButtons = document.getElementById('modalPanelButtons');
+const searchWrap = document.getElementById('searchWrap');
+const searchInput = document.getElementById('searchInput');
 
 let selectedOwner='Wes', editingTaskId=null, tasks=[], supabase=null, channel=null;
-let pollTimer=null;
-let lastLoadSucceeded=false;
-let realtimeHealthy=false;
+let pollTimer=null, lastLoadSucceeded=false, realtimeHealthy=false;
+let panelState = loadPanelState();
+let filters = { search:'', tag:'', time:'' };
+
+function loadPanelState() {
+  try {
+    return {...DEFAULT_PANEL_STATE, ...(JSON.parse(localStorage.getItem(PANEL_STATE_KEY) || '{}'))};
+  } catch {
+    return {...DEFAULT_PANEL_STATE};
+  }
+}
+function savePanelState() { localStorage.setItem(PANEL_STATE_KEY, JSON.stringify(panelState)); }
 
 function setStatus(text){ syncStatus.textContent='Sync status: ' + text; }
 function updateStatus() {
@@ -234,16 +272,38 @@ function parseQuickText(raw){
   return {title:working,owner:o.owner,panel:'upcoming',due:d.due,tag:'',description:''};
 }
 
+function matchesFilters(task) {
+  const hay = [task.title, task.owner, task.tag, task.due_text, task.description].join(' ').toLowerCase();
+  if (filters.search && !hay.includes(filters.search.toLowerCase())) return false;
+  if (filters.tag && String(task.tag || '').toLowerCase() !== filters.tag.toLowerCase()) return false;
+  if (filters.time && !String(task.due_text || '').toLowerCase().includes(filters.time.toLowerCase())) return false;
+  return true;
+}
+
 function render(){
   panelGrid.innerHTML='';
   PANELS.forEach(panel=>{
-    const panelTasks=tasks.filter(t=>t.panel===panel.key);
+    const panelTasks=tasks.filter(t=>t.panel===panel.key && matchesFilters(t));
+    const isOpen = !!panelState[panel.key];
+    const icon = isOpen ? '▾' : '▸';
     const section=document.createElement('section');
     section.className='panel';
-    section.innerHTML=`<div class="panel-header"><h2 class="panel-title">${panel.title}</h2><div class="count">${panelTasks.length} ${panelTasks.length===1?'task':'tasks'}</div></div><div class="panel-body">${panelTasks.length?panelTasks.map(renderCard).join(''):'<div class="empty">Nothing here right now.</div>'}</div>`;
+    section.innerHTML=`<div class="panel-header">
+      <div class="panel-title-wrap">
+        <button type="button" class="panel-toggle" data-panel-toggle="${panel.key}" aria-label="Toggle panel">${icon}</button>
+        <h2 class="panel-title">${panel.title}</h2>
+      </div>
+      <div class="count">${panelTasks.length} ${panelTasks.length===1?'task':'tasks'}</div>
+    </div>
+    <div class="panel-body ${isOpen ? '' : 'collapsed'}">
+      ${panelTasks.length?panelTasks.map(renderCard).join(''):'<div class="empty">Nothing here right now.</div>'}
+    </div>`;
     panelGrid.appendChild(section);
   });
   panelGrid.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',handleCardAction));
+  panelGrid.querySelectorAll('[data-panel-toggle]').forEach(btn=>btn.addEventListener('click', togglePanel));
+  attachSwipeHandlers();
+  syncFilterChips();
 }
 
 function renderCard(task){
@@ -253,8 +313,29 @@ function renderCard(task){
   const descText=task.description?`<p class="desc">${esc(task.description)}</p>`:'';
   const quick=task.panel==='done'
     ? `<div class="quick"><button class="mini-btn" data-action="reopen" data-id="${task.id}">Reopen</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`
-    : `<div class="quick"><button class="mini-btn" data-action="done" data-id="${task.id}">Done</button><button class="mini-btn" data-action="next-panel" data-id="${task.id}">Move</button><button class="icon-btn" data-action="edit" data-id="${task.id}" aria-label="Edit task">✎</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
-  return `<article class="card" data-id="${task.id}"><div class="task-row"><h3 class="title">${esc(task.title)}</h3><div class="${ownerClass}">${esc(task.owner||'')}</div></div><div class="meta"><div class="meta-pill">${dueText}</div>${tagText}</div>${descText}${quick}</article>`;
+    : `<div class="quick"><button class="mini-btn" data-action="done" data-id="${task.id}">Done</button><button class="mini-btn" data-action="next-panel" data-id="${task.id}">Move</button><button class="icon-btn edit-btn" data-action="edit" data-id="${task.id}" aria-label="Edit task">✎</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
+  return `<article class="card" data-id="${task.id}">
+    <div class="task-row"><h3 class="title">${esc(task.title)}</h3><div class="${ownerClass}">${esc(task.owner||'')}</div></div>
+    <div class="meta"><div class="meta-pill">${dueText}</div>${tagText}</div>
+    ${descText}
+    ${quick}
+    <div class="swipe-hint">Swipe left → next panel</div>
+  </article>`;
+}
+
+function togglePanel(e) {
+  const key = e.currentTarget.getAttribute('data-panel-toggle');
+  panelState[key] = !panelState[key];
+  savePanelState();
+  render();
+}
+
+function syncFilterChips() {
+  document.querySelectorAll('.filter-chip[data-filter-group]').forEach(btn => {
+    const group = btn.getAttribute('data-filter-group');
+    const value = btn.getAttribute('data-filter-value');
+    btn.classList.toggle('active', filters[group] === value);
+  });
 }
 
 function nextPanel(k){ return k==='upcoming'?'inMotion':k==='inMotion'?'waiting':k==='waiting'?'done':'upcoming'; }
@@ -285,11 +366,7 @@ function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(async () => {
     if (document.hidden) return;
-    try {
-      await loadTasks(true);
-    } catch (err) {
-      console.error('Polling load failed', err);
-    }
+    try { await loadTasks(true); } catch (err) { console.error('Polling load failed', err); }
   }, 4000);
 }
 
@@ -323,6 +400,15 @@ function setSelectedOwner(owner){
   ownerToggle.querySelectorAll('button').forEach(btn=>btn.classList.toggle('active', btn.dataset.owner===owner));
 }
 
+async function moveTaskToNext(taskId) {
+  const task=tasks.find(t=>t.id===taskId); if(!task) return;
+  const next = nextPanel(task.panel);
+  const patch = { panel: next, updated_at: isoNow(), completed_at: next === 'done' ? isoNow() : null };
+  const { data, error } = await supabase.from('tasks').update(patch).eq('id', taskId).select().single();
+  if(error) alert('Could not move task: ' + error.message);
+  else upsertTaskInMemory(data);
+}
+
 async function handleCardAction(e){
   const action=e.currentTarget.getAttribute('data-action'), id=e.currentTarget.getAttribute('data-id');
   const task=tasks.find(t=>t.id===id); if(!task) return;
@@ -343,15 +429,7 @@ async function handleCardAction(e){
     return;
   }
 
-  if(action==='next-panel'){
-    const next = nextPanel(task.panel);
-    const patch = { panel: next, updated_at: isoNow(), completed_at: next === 'done' ? isoNow() : null };
-    const { data, error } = await supabase.from('tasks').update(patch).eq('id', id).select().single();
-    if(error) alert('Could not move task: ' + error.message);
-    else upsertTaskInMemory(data);
-    return;
-  }
-
+  if(action==='next-panel'){ await moveTaskToNext(id); return; }
   if(action==='edit'){ openEditDialog(task); return; }
 
   if(action==='delete'){
@@ -360,6 +438,44 @@ async function handleCardAction(e){
     if(error) alert('Could not delete task: ' + error.message);
     else removeTaskInMemory(id);
   }
+}
+
+function attachSwipeHandlers() {
+  panelGrid.querySelectorAll('.card').forEach(card => {
+    let startX = 0, currentX = 0, dragging = False = false;
+    const id = card.getAttribute('data-id');
+
+    const onStart = (x) => {
+      startX = x;
+      currentX = x;
+      dragging = true;
+      card.classList.add('swiping');
+    };
+    const onMove = (x) => {
+      if (!dragging) return;
+      currentX = x;
+      const dx = currentX - startX;
+      if (dx < 0) card.style.transform = `translateX(${Math.max(dx, -90)}px)`;
+    };
+    const onEnd = async () => {
+      if (!dragging) return;
+      dragging = false;
+      const dx = currentX - startX;
+      card.classList.remove('swiping');
+      card.style.transform = '';
+      if (dx < -70) {
+        await moveTaskToNext(id);
+      }
+    };
+
+    card.addEventListener('touchstart', e => onStart(e.touches[0].clientX), {passive:true});
+    card.addEventListener('touchmove', e => onMove(e.touches[0].clientX), {passive:true});
+    card.addEventListener('touchend', onEnd);
+    card.addEventListener('mousedown', e => onStart(e.clientX));
+    card.addEventListener('mousemove', e => onMove(e.clientX));
+    card.addEventListener('mouseup', onEnd);
+    card.addEventListener('mouseleave', onEnd);
+  });
 }
 
 function openEditDialog(task){
@@ -466,16 +582,8 @@ modalPanelButtons.addEventListener('click', e => {
 editTaskOwner.addEventListener('change', syncModalButtons);
 editTaskPanel.addEventListener('change', syncModalButtons);
 
-document.querySelectorAll('[data-due-chip]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    editTaskDue.value = btn.getAttribute('data-due-chip');
-  });
-});
-document.querySelectorAll('[data-tag-chip]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    editTaskTag.value = btn.getAttribute('data-tag-chip');
-  });
-});
+document.querySelectorAll('[data-due-chip]').forEach(btn => btn.addEventListener('click', () => { editTaskDue.value = btn.getAttribute('data-due-chip'); }));
+document.querySelectorAll('[data-tag-chip]').forEach(btn => btn.addEventListener('click', () => { editTaskTag.value = btn.getAttribute('data-tag-chip'); }));
 
 document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 document.getElementById('cancelEditBtn').addEventListener('click', closeEditDialog);
@@ -498,13 +606,33 @@ helpBackdrop.addEventListener('click', e=>{ if(e.target===helpBackdrop) closeHel
 document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if(editBackdrop.classList.contains('open')) closeEditDialog(); if(helpBackdrop.classList.contains('open')) closeHelpDialog(); } });
 document.addEventListener('visibilitychange', async () => {
   if (!document.hidden && supabase) {
-    try {
-      await loadTasks(true);
-      updateStatus();
-    } catch (err) {
-      console.error(err);
-    }
+    try { await loadTasks(true); updateStatus(); } catch (err) { console.error(err); }
   }
+});
+
+document.getElementById('searchToggleBtn').addEventListener('click', () => {
+  searchWrap.classList.toggle('open');
+  if (searchWrap.classList.contains('open')) searchInput.focus();
+  else {
+    filters.search = '';
+    searchInput.value = '';
+    render();
+  }
+});
+searchInput.addEventListener('input', () => {
+  filters.search = searchInput.value.trim();
+  render();
+});
+document.querySelectorAll('.filter-chip[data-filter-group]').forEach(btn => btn.addEventListener('click', () => {
+  const group = btn.getAttribute('data-filter-group');
+  const value = btn.getAttribute('data-filter-value');
+  filters[group] = filters[group] === value ? '' : value;
+  render();
+}));
+document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+  filters = {search:'', tag:'', time:''};
+  searchInput.value = '';
+  render();
 });
 
 setSelectedOwner(selectedOwner);
