@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Garden Board — Supabase Sync</title>
+<title>Garden Board — Supabase Sync v2</title>
 <style>
 :root{--bg-1:#08100b;--bg-2:#0d1711;--panel:#132019;--panel-2:#17261d;--card:#223328;--card-2:#2a3d30;--line:#355240;--text:#eef7ef;--muted:#aec0b2;--accent:#9ed48a;--accent-2:#6ea96f;--danger:#d97272;--shadow:0 14px 34px rgba(0,0,0,.34)}
 *{box-sizing:border-box}html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top left, rgba(110,169,111,.12), transparent 28%),radial-gradient(circle at bottom right, rgba(158,212,138,.10), transparent 34%),linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%)}button,input,textarea,select{font:inherit}
 .page{max-width:780px;margin:0 auto;padding:14px 12px 36px;position:relative}.page::before,.page::after{content:"";position:fixed;width:120px;height:320px;pointer-events:none;opacity:.24;z-index:0}.page::before{left:-18px;top:22px;background:radial-gradient(circle at 58px 22px, rgba(158,212,138,.9) 0 10px, transparent 11px),radial-gradient(circle at 30px 72px, rgba(158,212,138,.75) 0 10px, transparent 11px),radial-gradient(circle at 74px 122px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 24px 178px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 76px 240px, rgba(158,212,138,.75) 0 10px, transparent 11px),linear-gradient(110deg, transparent 0 42px, rgba(110,169,111,.75) 43px 47px, transparent 48px 100%);transform:rotate(-4deg)}.page::after{right:-26px;bottom:80px;background:radial-gradient(circle at 64px 28px, rgba(158,212,138,.85) 0 10px, transparent 11px),radial-gradient(circle at 24px 86px, rgba(158,212,138,.75) 0 10px, transparent 11px),radial-gradient(circle at 78px 142px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 28px 206px, rgba(158,212,138,.72) 0 10px, transparent 11px),radial-gradient(circle at 82px 268px, rgba(158,212,138,.7) 0 10px, transparent 11px),linear-gradient(68deg, transparent 0 46px, rgba(110,169,111,.72) 47px 51px, transparent 52px 100%);transform:rotate(7deg)}.content{position:relative;z-index:1}
 .hero{background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)),repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0px, rgba(255,255,255,.022) 1px, transparent 1px, transparent 42px);background-color:var(--panel);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}.hero-top{padding:18px 16px 14px;position:relative}.hero-top::after{content:"🌿  🪴  🍃";position:absolute;right:14px;top:12px;font-size:20px;opacity:.95}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px}h1{margin:0;font-size:28px;line-height:1.05}.sub{margin:10px 0 0;max-width:560px;color:var(--muted);font-size:14px;line-height:1.5}
-.capture{position:sticky;top:0;z-index:3;padding:12px;backdrop-filter:blur(10px);background:linear-gradient(180deg, rgba(8,16,11,.92), rgba(8,16,11,.75));border-top:1px solid rgba(255,255,255,.04)}.capture-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.18)}.capture-input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-size:16px}.capture-input::placeholder{color:#91a392}.toggle{display:flex;gap:6px}.toggle button,.add-btn,.mini-btn,.small-btn,.icon-btn{appearance:none;border:none}.toggle button{background:#294033;color:#d7e5d8;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.05)}.toggle .active{background:var(--accent);color:#102012}.add-btn{background:var(--accent);color:#112014;border-radius:12px;width:36px;height:36px;font-size:22px;font-weight:700;line-height:1}.helper-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.helper{color:var(--muted);font-size:12px;line-height:1.45}.small-ghost{background:rgba(255,255,255,.04);color:#d7e5d8;border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:7px 12px;font-size:12px}.status-pill{display:inline-block;margin-top:10px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
+.capture{position:sticky;top:0;z-index:3;padding:12px;backdrop-filter:blur(10px);background:linear-gradient(180deg, rgba(8,16,11,.92), rgba(8,16,11,.75));border-top:1px solid rgba(255,255,255,.04)}.capture-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.18)}.capture-input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-size:16px}.capture-input::placeholder{color:#91a392}.toggle{display:flex;gap:6px}.toggle button,.add-btn,.mini-btn,.small-btn,.icon-btn{appearance:none;border:none}.toggle button{background:#294033;color:#d7e5d8;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.05)}.toggle .active{background:var(--accent);color:#102012}.add-btn{background:var(--accent);color:#112014;border-radius:12px;width:36px;height:36px;font-size:22px;font-weight:700;line-height:1}.helper-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.helper{color:var(--muted);font-size:12px;line-height:1.45}.small-ghost{background:rgba(255,255,255,.04);color:#d7e5d8;border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:7px 12px;font-size:12px}
+.status-pill{display:inline-block;margin-top:10px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
 .panel-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}.panel{background:var(--panel-2);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow);position:relative;overflow:hidden}.panel::after{content:"";position:absolute;inset:auto -26px -26px auto;width:120px;height:120px;background:radial-gradient(circle at 36px 36px, rgba(158,212,138,.12) 0 12px, transparent 13px),radial-gradient(circle at 70px 70px, rgba(158,212,138,.10) 0 12px, transparent 13px),linear-gradient(140deg, transparent 0 42px, rgba(110,169,111,.16) 43px 47px, transparent 48px 100%);transform:rotate(10deg);pointer-events:none}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.panel-title{margin:0;font-size:18px;font-weight:700}.count{font-size:12px;color:#dff0db;background:rgba(158,212,138,.12);border:1px solid rgba(158,212,138,.18);border-radius:999px;padding:5px 10px;white-space:nowrap}.empty{color:var(--muted);font-size:14px;padding:6px 4px 2px}
 .card{position:relative;background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));background-color:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:12px}.card:last-child{margin-bottom:0}.card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent-2))}.task-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-left:8px}.title{margin:0;font-size:16px;line-height:1.25}.owner{font-size:11px;padding:6px 9px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);background:#2c4033;color:#eef7ef}.owner.skye{background:rgba(210,230,203,.12);color:#e7f3e3}.meta{padding-left:8px;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}.meta-pill{background:var(--card-2);border:1px solid var(--line);color:var(--muted);font-size:12px;padding:6px 10px;border-radius:999px}.desc{padding-left:8px;margin:10px 0 0;color:#d7e5d9;font-size:14px;line-height:1.45;white-space:pre-wrap}.quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.mini-btn,.small-btn,.icon-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:6px 10px;font-size:11px}.small-btn{font-size:12px;padding:7px 10px}.icon-btn{width:30px;height:30px;padding:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}.small-btn.danger,.icon-btn.danger{color:#ffdede;background:rgba(217,114,114,.12);border-color:rgba(217,114,114,.2)}
 .notes{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow)}.notes h2{margin:0 0 10px;font-size:18px}.notes-box{width:100%;background:rgba(255,255,255,.02);border:1px dashed #4d6a57;border-radius:16px;min-height:88px;padding:14px;color:var(--text);resize:vertical;outline:none}.toolbar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.footer-status{margin-top:10px;color:var(--muted);font-size:12px}
@@ -21,7 +22,7 @@
 </head>
 <body>
 <div class="page"><div class="content">
-<section class="hero"><div class="hero-top"><div class="eyebrow">Shared Home Board</div><h1>Garden Board</h1><p class="sub">Supabase-backed shared board. Add a task here and it should sync across devices using the same project and household.</p></div>
+<section class="hero"><div class="hero-top"><div class="eyebrow">Shared Home Board</div><h1>Garden Board</h1><p class="sub">Supabase-backed shared board. This build updates the UI immediately after writes, even if Realtime is slow.</p></div>
 <div class="capture"><div class="capture-box">
 <input id="quickInput" class="capture-input" placeholder="Add task… e.g. Skye groceries tomorrow, Wes bins Tuesday morning" />
 <div class="toggle" id="ownerToggle"><button type="button" data-owner="Wes" class="active">Wes</button><button type="button" data-owner="Skye">Skye</button></div>
@@ -68,9 +69,9 @@
 const SUPABASE_URL = "https://pssgbrtyhwoumhiynwlj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_Ew7XkaYZV2w9vzFndOAq3w_ND4G6JQM";
 const HOUSEHOLD_ID = "ca0ebdfc-f533-46d5-b8bb-1c6f6d0b6248";
-const NOTES_KEY = "garden-board-notes-sync-v1";
+const NOTES_KEY = "garden-board-notes-sync-v2";
 
-(()=> {
+(() => {
 const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'waiting',title:'Waiting / Someday'},{key:'done',title:'Done'}];
 const DUE_PATTERNS=[
 [/\bday after tomorrow\b/i,'Day after tomorrow'],
@@ -96,10 +97,35 @@ const helpBackdrop=$('helpDialogBackdrop');
 let selectedOwner='Wes', editingTaskId=null, tasks=[], supabase=null, channel=null;
 
 function setStatus(text){ syncStatus.textContent='Sync status: ' + text; }
-function rid(){ return (window.crypto&&crypto.randomUUID)?crypto.randomUUID():'task-'+Date.now()+'-'+Math.random().toString(16).slice(2); }
 function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 function clean(text){ return text.replace(/\s{2,}/g,' ').replace(/\s+,/g,',').replace(/\s+\./g,'.').replace(/^[,\-–:\s]+/,'').replace(/[,\-–:\s]+$/,'').trim(); }
 function isoNow(){ return new Date().toISOString(); }
+
+function extractOwner(text,fallback){
+  let owner=fallback, working=text.trim();
+  let m=working.match(/^(wes|skye)\b[\s,:-]*/i);
+  if(m){ owner=m[1].toLowerCase()==='wes'?'Wes':'Skye'; working=working.replace(/^(wes|skye)\b[\s,:-]*/i,''); return {owner,text:clean(working)}; }
+  m=working.match(/\bfor\s+(wes|skye)\b/i);
+  if(m){ owner=m[1].toLowerCase()==='wes'?'Wes':'Skye'; working=working.replace(/\bfor\s+(wes|skye)\b/i,''); return {owner,text:clean(working)}; }
+  m=working.match(/\bto\s+(wes|skye)\b/i);
+  if(m){ owner=m[1].toLowerCase()==='wes'?'Wes':'Skye'; working=working.replace(/\bto\s+(wes|skye)\b/i,''); return {owner,text:clean(working)}; }
+  return {owner,text:clean(working)};
+}
+
+function extractDue(text){
+  let due='', working=text;
+  for(const [regex,value] of DUE_PATTERNS){ if(regex.test(working)){ due=value; working=working.replace(regex,''); break; } }
+  return {due,text:clean(working)};
+}
+
+function parseQuickText(raw){
+  let working=raw.trim();
+  const o=extractOwner(working, selectedOwner); working=o.text;
+  const d=extractDue(working); working=d.text;
+  if(!working) working=raw.trim();
+  return {title:working,owner:o.owner,panel:'upcoming',due:d.due,tag:'',description:''};
+}
+
 function render(){
   panelGrid.innerHTML='';
   PANELS.forEach(panel=>{
@@ -111,6 +137,7 @@ function render(){
   });
   panelGrid.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',handleCardAction));
 }
+
 function renderCard(task){
   const ownerClass=task.owner==='Skye'?'owner skye':'owner';
   const dueText=task.panel==='done'?`✅ ${esc(task.due_text||'Finished')}`:`📅 ${esc(task.due_text||'No due date')}`;
@@ -121,97 +148,203 @@ function renderCard(task){
     : `<div class="quick"><button class="mini-btn" data-action="done" data-id="${task.id}">Done</button><button class="mini-btn" data-action="next-panel" data-id="${task.id}">Move</button><button class="icon-btn" data-action="edit" data-id="${task.id}" aria-label="Edit task">✎</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
   return `<article class="card" data-id="${task.id}"><div class="task-row"><h3 class="title">${esc(task.title)}</h3><div class="${ownerClass}">${esc(task.owner||'')}</div></div><div class="meta"><div class="meta-pill">${dueText}</div>${tagText}</div>${descText}${quick}</article>`;
 }
-function extractOwner(text,fallback){
-  let owner=fallback, working=text.trim();
-  let m=working.match(/^(wes|skye)\b[\s,:-]*/i);
-  if(m){ owner=m[1].toLowerCase()==='wes'?'Wes':'Skye'; working=working.replace(/^(wes|skye)\b[\s,:-]*/i,''); return {owner,text:clean(working)}; }
-  m=working.match(/\bfor\s+(wes|skye)\b/i);
-  if(m){ owner=m[1].toLowerCase()==='wes'?'Wes':'Skye'; working=working.replace(/\bfor\s+(wes|skye)\b/i,''); return {owner,text:clean(working)}; }
-  m=working.match(/\bto\s+(wes|skye)\b/i);
-  if(m){ owner=m[1].toLowerCase()==='wes'?'Wes':'Skye'; working=working.replace(/\bto\s+(wes|skye)\b/i,''); return {owner,text:clean(working)}; }
-  return {owner,text:clean(working)};
-}
-function extractDue(text){
-  let due='', working=text;
-  for(const [regex,value] of DUE_PATTERNS){ if(regex.test(working)){ due=value; working=working.replace(regex,''); break; } }
-  return {due,text:clean(working)};
-}
-function parseQuickText(raw){
-  let working=raw.trim();
-  const o=extractOwner(working, selectedOwner); working=o.text;
-  const d=extractDue(working); working=d.text;
-  if(!working) working=raw.trim();
-  return {title:working,owner:o.owner,panel:'upcoming',due:d.due,tag:'',desc:''};
-}
+
+function nextPanel(k){ return k==='upcoming'?'inMotion':k==='inMotion'?'waiting':k==='waiting'?'done':'upcoming'; }
+
 async function loadTasks(){
   const { data, error } = await supabase.from('tasks').select('*').eq('household_id', HOUSEHOLD_ID).order('created_at', { ascending: false });
   if(error) throw error;
   tasks = data || [];
   render();
 }
+
+function upsertTaskInMemory(task){
+  const idx = tasks.findIndex(t => t.id === task.id);
+  if (idx === -1) tasks.unshift(task);
+  else tasks[idx] = task;
+  tasks.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  render();
+}
+
+function removeTaskInMemory(id){
+  tasks = tasks.filter(t => t.id !== id);
+  render();
+}
+
 async function addQuickTask(){
   const raw=quickInput.value.trim(); if(!raw) return;
   const parsed=parseQuickText(raw), title=clean(parsed.title); if(!title) return;
-  const row = { id: rid(), household_id: HOUSEHOLD_ID, title, owner: parsed.owner, panel: 'upcoming', due_text: parsed.due, tag: '', description: '', created_at: isoNow(), updated_at: isoNow(), completed_at: null };
-  const { error } = await supabase.from('tasks').insert(row);
+
+  const row = {
+    household_id: HOUSEHOLD_ID,
+    title,
+    owner: parsed.owner,
+    panel: 'upcoming',
+    due_text: parsed.due,
+    tag: '',
+    description: '',
+    created_at: isoNow(),
+    updated_at: isoNow(),
+    completed_at: null
+  };
+
+  const { data, error } = await supabase.from('tasks').insert(row).select().single();
   if(error){ alert('Could not add task: ' + error.message); return; }
-  quickInput.value=''; quickInput.focus();
+
+  upsertTaskInMemory(data);
+  quickInput.value='';
+  quickInput.focus();
 }
-function setSelectedOwner(owner){ selectedOwner=owner; ownerToggle.querySelectorAll('button').forEach(btn=>btn.classList.toggle('active', btn.dataset.owner===owner)); }
-function nextPanel(k){ return k==='upcoming'?'inMotion':k==='inMotion'?'waiting':k==='waiting'?'done':'upcoming'; }
+
+function setSelectedOwner(owner){
+  selectedOwner=owner;
+  ownerToggle.querySelectorAll('button').forEach(btn=>btn.classList.toggle('active', btn.dataset.owner===owner));
+}
+
 async function handleCardAction(e){
   const action=e.currentTarget.getAttribute('data-action'), id=e.currentTarget.getAttribute('data-id');
   const task=tasks.find(t=>t.id===id); if(!task) return;
+
   if(action==='done'){
-    const { error } = await supabase.from('tasks').update({ panel:'done', due_text: task.due_text || 'Finished', completed_at: isoNow(), updated_at: isoNow() }).eq('id', id);
-    if(error) alert('Could not update task: ' + error.message); return;
+    const patch = { panel:'done', due_text: task.due_text || 'Finished', completed_at: isoNow(), updated_at: isoNow() };
+    const { data, error } = await supabase.from('tasks').update(patch).eq('id', id).select().single();
+    if(error) alert('Could not update task: ' + error.message);
+    else upsertTaskInMemory(data);
+    return;
   }
+
   if(action==='reopen'){
-    const { error } = await supabase.from('tasks').update({ panel:'upcoming', due_text: task.due_text === 'Finished' ? '' : task.due_text, completed_at: null, updated_at: isoNow() }).eq('id', id);
-    if(error) alert('Could not reopen task: ' + error.message); return;
+    const patch = { panel:'upcoming', due_text: task.due_text === 'Finished' ? '' : task.due_text, completed_at: null, updated_at: isoNow() };
+    const { data, error } = await supabase.from('tasks').update(patch).eq('id', id).select().single();
+    if(error) alert('Could not reopen task: ' + error.message);
+    else upsertTaskInMemory(data);
+    return;
   }
+
   if(action==='next-panel'){
-    const next = nextPanel(task.panel); const patch = { panel: next, updated_at: isoNow() }; if(next === 'done') patch.completed_at = isoNow();
-    const { error } = await supabase.from('tasks').update(patch).eq('id', id);
-    if(error) alert('Could not move task: ' + error.message); return;
+    const next = nextPanel(task.panel);
+    const patch = { panel: next, updated_at: isoNow(), completed_at: next === 'done' ? isoNow() : null };
+    const { data, error } = await supabase.from('tasks').update(patch).eq('id', id).select().single();
+    if(error) alert('Could not move task: ' + error.message);
+    else upsertTaskInMemory(data);
+    return;
   }
+
   if(action==='edit'){ openEditDialog(task); return; }
-  if(action==='delete'){ if(!confirm(`Delete "${task.title}"?`)) return; const { error } = await supabase.from('tasks').delete().eq('id', id); if(error) alert('Could not delete task: ' + error.message); }
+
+  if(action==='delete'){
+    if(!confirm(`Delete "${task.title}"?`)) return;
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
+    if(error) alert('Could not delete task: ' + error.message);
+    else removeTaskInMemory(id);
+  }
 }
-function openEditDialog(task){ editingTaskId=task.id; editTaskTitle.value=task.title||''; editTaskOwner.value=task.owner||'Wes'; editTaskPanel.value=task.panel||'upcoming'; editTaskDue.value=task.due_text||''; editTaskTag.value=task.tag||''; editTaskDesc.value=task.description||''; editBackdrop.classList.add('open'); editBackdrop.setAttribute('aria-hidden','false'); }
+
+function openEditDialog(task){
+  editingTaskId=task.id;
+  editTaskTitle.value=task.title||'';
+  editTaskOwner.value=task.owner||'Wes';
+  editTaskPanel.value=task.panel||'upcoming';
+  editTaskDue.value=task.due_text||'';
+  editTaskTag.value=task.tag||'';
+  editTaskDesc.value=task.description||'';
+  editBackdrop.classList.add('open');
+  editBackdrop.setAttribute('aria-hidden','false');
+}
+
 function closeEditDialog(){ editingTaskId=null; editBackdrop.classList.remove('open'); editBackdrop.setAttribute('aria-hidden','true'); }
 function openHelpDialog(){ helpBackdrop.classList.add('open'); helpBackdrop.setAttribute('aria-hidden','false'); }
 function closeHelpDialog(){ helpBackdrop.classList.remove('open'); helpBackdrop.setAttribute('aria-hidden','true'); }
+
 async function saveEdit(){
-  const title=editTaskTitle.value.trim(); if(!title){ alert('Task title cannot be empty.'); return; }
-  const patch = { title, owner: editTaskOwner.value, panel: editTaskPanel.value, due_text: editTaskDue.value.trim(), tag: editTaskTag.value.trim(), description: editTaskDesc.value.trim(), updated_at: isoNow(), completed_at: editTaskPanel.value === 'done' ? (tasks.find(t => t.id === editingTaskId)?.completed_at || isoNow()) : null };
-  const { error } = await supabase.from('tasks').update(patch).eq('id', editingTaskId);
+  const title=editTaskTitle.value.trim();
+  if(!title){ alert('Task title cannot be empty.'); return; }
+  const current = tasks.find(t => t.id === editingTaskId);
+  const patch = {
+    title,
+    owner: editTaskOwner.value,
+    panel: editTaskPanel.value,
+    due_text: editTaskDue.value.trim(),
+    tag: editTaskTag.value.trim(),
+    description: editTaskDesc.value.trim(),
+    updated_at: isoNow(),
+    completed_at: editTaskPanel.value === 'done' ? (current?.completed_at || isoNow()) : null
+  };
+  const { data, error } = await supabase.from('tasks').update(patch).eq('id', editingTaskId).select().single();
   if(error){ alert('Could not save task: ' + error.message); return; }
+  upsertTaskInMemory(data);
   closeEditDialog();
 }
+
 function connectRealtime(){
   if(channel) supabase.removeChannel(channel);
-  channel = supabase.channel('garden-board-tasks').on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `household_id=eq.${HOUSEHOLD_ID}` }, async () => { await loadTasks(); }).subscribe((status) => { if(status === 'SUBSCRIBED') setStatus('connected'); });
+  channel = supabase.channel('garden-board-tasks')
+    .on('postgres_changes', { event:'*', schema:'public', table:'tasks', filter:`household_id=eq.${HOUSEHOLD_ID}` }, async () => {
+      try {
+        await loadTasks();
+        setStatus('connected');
+      } catch (err) {
+        console.error(err);
+      }
+    })
+    .subscribe((status) => {
+      console.log('Realtime status:', status);
+      if(status === 'SUBSCRIBED') setStatus('connected');
+      else if(status === 'CHANNEL_ERROR') setStatus('realtime error');
+      else if(status === 'TIMED_OUT') setStatus('realtime timed out');
+      else if(status === 'CLOSED') setStatus('disconnected');
+    });
 }
+
 async function init(){
   notesBox.value = localStorage.getItem(NOTES_KEY) || '';
   notesBox.addEventListener('input', () => localStorage.setItem(NOTES_KEY, notesBox.value));
-  if(SUPABASE_ANON_KEY.includes('REPLACE_WITH')){ setStatus('paste your public key into the file first'); render(); return; }
-  try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); setStatus('loading tasks…'); await loadTasks(); connectRealtime(); } catch (err) { console.error(err); setStatus('connection error'); alert('Could not connect to Supabase. Check your URL, key, and table setup.'); }
+
+  if(SUPABASE_ANON_KEY.includes('REPLACE_WITH')){
+    setStatus('paste your public key into the file first');
+    render();
+    return;
+  }
+
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    setStatus('loading tasks…');
+    await loadTasks();
+    setStatus('tasks loaded');
+    connectRealtime();
+  } catch (err) {
+    console.error(err);
+    setStatus('connection error');
+    alert('Could not connect to Supabase. Check your URL, key, and table setup.');
+  }
 }
+
 addTaskBtn.addEventListener('click', addQuickTask);
-quickInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addQuickTask(); }});
+quickInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addQuickTask(); } });
 ownerToggle.addEventListener('click', e=>{ const btn=e.target.closest('button[data-owner]'); if(btn) setSelectedOwner(btn.dataset.owner); });
 document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 document.getElementById('cancelEditBtn').addEventListener('click', closeEditDialog);
-document.getElementById('deleteTaskBtn').addEventListener('click', async ()=>{ if(!editingTaskId) return; const task=tasks.find(t=>t.id===editingTaskId); if(!confirm(task ? `Delete "${task.title}"?` : 'Delete this task?')) return; const { error } = await supabase.from('tasks').delete().eq('id', editingTaskId); if(error) alert('Could not delete task: ' + error.message); else closeEditDialog(); });
+document.getElementById('deleteTaskBtn').addEventListener('click', async ()=>{
+  if(!editingTaskId) return;
+  const task=tasks.find(t=>t.id===editingTaskId);
+  if(!confirm(task ? `Delete "${task.title}"?` : 'Delete this task?')) return;
+  const { error } = await supabase.from('tasks').delete().eq('id', editingTaskId);
+  if(error) alert('Could not delete task: ' + error.message);
+  else {
+    removeTaskInMemory(editingTaskId);
+    closeEditDialog();
+  }
+});
 document.getElementById('helpBtn').addEventListener('click', openHelpDialog);
 document.getElementById('closeHelpBtn').addEventListener('click', closeHelpDialog);
 document.getElementById('clearNotesBtn').addEventListener('click', ()=>{ notesBox.value=''; localStorage.removeItem(NOTES_KEY); });
 editBackdrop.addEventListener('click', e=>{ if(e.target===editBackdrop) closeEditDialog(); });
 helpBackdrop.addEventListener('click', e=>{ if(e.target===helpBackdrop) closeHelpDialog(); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if(editBackdrop.classList.contains('open')) closeEditDialog(); if(helpBackdrop.classList.contains('open')) closeHelpDialog(); }});
-setSelectedOwner(selectedOwner); render(); init();
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if(editBackdrop.classList.contains('open')) closeEditDialog(); if(helpBackdrop.classList.contains('open')) closeHelpDialog(); } });
+
+setSelectedOwner(selectedOwner);
+render();
+init();
 })();
 </script>
 </body>
