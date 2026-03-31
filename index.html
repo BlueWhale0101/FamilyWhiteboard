@@ -3,26 +3,30 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Garden Board — Supabase Sync v2</title>
+<title>Garden Board — Supabase Sync v3</title>
 <style>
 :root{--bg-1:#08100b;--bg-2:#0d1711;--panel:#132019;--panel-2:#17261d;--card:#223328;--card-2:#2a3d30;--line:#355240;--text:#eef7ef;--muted:#aec0b2;--accent:#9ed48a;--accent-2:#6ea96f;--danger:#d97272;--shadow:0 14px 34px rgba(0,0,0,.34)}
 *{box-sizing:border-box}html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top left, rgba(110,169,111,.12), transparent 28%),radial-gradient(circle at bottom right, rgba(158,212,138,.10), transparent 34%),linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%)}button,input,textarea,select{font:inherit}
 .page{max-width:780px;margin:0 auto;padding:14px 12px 36px;position:relative}.page::before,.page::after{content:"";position:fixed;width:120px;height:320px;pointer-events:none;opacity:.24;z-index:0}.page::before{left:-18px;top:22px;background:radial-gradient(circle at 58px 22px, rgba(158,212,138,.9) 0 10px, transparent 11px),radial-gradient(circle at 30px 72px, rgba(158,212,138,.75) 0 10px, transparent 11px),radial-gradient(circle at 74px 122px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 24px 178px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 76px 240px, rgba(158,212,138,.75) 0 10px, transparent 11px),linear-gradient(110deg, transparent 0 42px, rgba(110,169,111,.75) 43px 47px, transparent 48px 100%);transform:rotate(-4deg)}.page::after{right:-26px;bottom:80px;background:radial-gradient(circle at 64px 28px, rgba(158,212,138,.85) 0 10px, transparent 11px),radial-gradient(circle at 24px 86px, rgba(158,212,138,.75) 0 10px, transparent 11px),radial-gradient(circle at 78px 142px, rgba(158,212,138,.7) 0 10px, transparent 11px),radial-gradient(circle at 28px 206px, rgba(158,212,138,.72) 0 10px, transparent 11px),radial-gradient(circle at 82px 268px, rgba(158,212,138,.7) 0 10px, transparent 11px),linear-gradient(68deg, transparent 0 46px, rgba(110,169,111,.72) 47px 51px, transparent 52px 100%);transform:rotate(7deg)}.content{position:relative;z-index:1}
 .hero{background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)),repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0px, rgba(255,255,255,.022) 1px, transparent 1px, transparent 42px);background-color:var(--panel);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}.hero-top{padding:18px 16px 14px;position:relative}.hero-top::after{content:"🌿  🪴  🍃";position:absolute;right:14px;top:12px;font-size:20px;opacity:.95}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px}h1{margin:0;font-size:28px;line-height:1.05}.sub{margin:10px 0 0;max-width:560px;color:var(--muted);font-size:14px;line-height:1.5}
-.capture{position:sticky;top:0;z-index:3;padding:12px;backdrop-filter:blur(10px);background:linear-gradient(180deg, rgba(8,16,11,.92), rgba(8,16,11,.75));border-top:1px solid rgba(255,255,255,.04)}.capture-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.18)}.capture-input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-size:16px}.capture-input::placeholder{color:#91a392}.toggle{display:flex;gap:6px}.toggle button,.add-btn,.mini-btn,.small-btn,.icon-btn{appearance:none;border:none}.toggle button{background:#294033;color:#d7e5d8;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.05)}.toggle .active{background:var(--accent);color:#102012}.add-btn{background:var(--accent);color:#112014;border-radius:12px;width:36px;height:36px;font-size:22px;font-weight:700;line-height:1}.helper-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.helper{color:var(--muted);font-size:12px;line-height:1.45}.small-ghost{background:rgba(255,255,255,.04);color:#d7e5d8;border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:7px 12px;font-size:12px}
+.capture{position:sticky;top:0;z-index:3;padding:12px;backdrop-filter:blur(10px);background:linear-gradient(180deg, rgba(8,16,11,.92), rgba(8,16,11,.75));border-top:1px solid rgba(255,255,255,.04)}.capture-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.18)}.capture-input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-size:16px}.capture-input::placeholder{color:#91a392}.toggle{display:flex;gap:6px}.toggle button,.add-btn,.mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{appearance:none;border:none}.toggle button{background:#294033;color:#d7e5d8;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.05)}.toggle .active{background:var(--accent);color:#102012}.add-btn{background:var(--accent);color:#112014;border-radius:12px;width:36px;height:36px;font-size:22px;font-weight:700;line-height:1}.helper-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.helper{color:var(--muted);font-size:12px;line-height:1.45}.small-ghost{background:rgba(255,255,255,.04);color:#d7e5d8;border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:7px 12px;font-size:12px}
 .status-pill{display:inline-block;margin-top:10px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
 .panel-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}.panel{background:var(--panel-2);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow);position:relative;overflow:hidden}.panel::after{content:"";position:absolute;inset:auto -26px -26px auto;width:120px;height:120px;background:radial-gradient(circle at 36px 36px, rgba(158,212,138,.12) 0 12px, transparent 13px),radial-gradient(circle at 70px 70px, rgba(158,212,138,.10) 0 12px, transparent 13px),linear-gradient(140deg, transparent 0 42px, rgba(110,169,111,.16) 43px 47px, transparent 48px 100%);transform:rotate(10deg);pointer-events:none}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.panel-title{margin:0;font-size:18px;font-weight:700}.count{font-size:12px;color:#dff0db;background:rgba(158,212,138,.12);border:1px solid rgba(158,212,138,.18);border-radius:999px;padding:5px 10px;white-space:nowrap}.empty{color:var(--muted);font-size:14px;padding:6px 4px 2px}
-.card{position:relative;background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));background-color:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:12px}.card:last-child{margin-bottom:0}.card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent-2))}.task-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-left:8px}.title{margin:0;font-size:16px;line-height:1.25}.owner{font-size:11px;padding:6px 9px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);background:#2c4033;color:#eef7ef}.owner.skye{background:rgba(210,230,203,.12);color:#e7f3e3}.meta{padding-left:8px;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}.meta-pill{background:var(--card-2);border:1px solid var(--line);color:var(--muted);font-size:12px;padding:6px 10px;border-radius:999px}.desc{padding-left:8px;margin:10px 0 0;color:#d7e5d9;font-size:14px;line-height:1.45;white-space:pre-wrap}.quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.mini-btn,.small-btn,.icon-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:6px 10px;font-size:11px}.small-btn{font-size:12px;padding:7px 10px}.icon-btn{width:30px;height:30px;padding:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}.small-btn.danger,.icon-btn.danger{color:#ffdede;background:rgba(217,114,114,.12);border-color:rgba(217,114,114,.2)}
+.card{position:relative;background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));background-color:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin-bottom:12px}.card:last-child{margin-bottom:0}.card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent-2))}.task-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-left:8px}.title{margin:0;font-size:16px;line-height:1.25}.owner{font-size:11px;padding:6px 9px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);background:#2c4033;color:#eef7ef}.owner.skye{background:rgba(210,230,203,.12);color:#e7f3e3}.meta{padding-left:8px;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}.meta-pill{background:var(--card-2);border:1px solid var(--line);color:var(--muted);font-size:12px;padding:6px 10px;border-radius:999px}.desc{padding-left:8px;margin:10px 0 0;color:#d7e5d9;font-size:14px;line-height:1.45;white-space:pre-wrap}.quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:6px 10px;font-size:11px}.small-btn{font-size:12px;padding:7px 10px}.icon-btn{width:30px;height:30px;padding:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}.small-btn.danger,.icon-btn.danger{color:#ffdede;background:rgba(217,114,114,.12);border-color:rgba(217,114,114,.2)}
 .notes{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow)}.notes h2{margin:0 0 10px;font-size:18px}.notes-box{width:100%;background:rgba(255,255,255,.02);border:1px dashed #4d6a57;border-radius:16px;min-height:88px;padding:14px;color:var(--text);resize:vertical;outline:none}.toolbar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.footer-status{margin-top:10px;color:var(--muted);font-size:12px}
-.dialog-backdrop{position:fixed;inset:0;background:rgba(4,8,5,.62);display:none;align-items:flex-end;justify-content:center;z-index:40;padding:12px}.dialog-backdrop.open{display:flex}.dialog{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:16px}.dialog h3{margin:0 0 12px;font-size:20px}.form-grid{display:grid;gap:12px}.field label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:14px;padding:12px;outline:none}.field textarea{min-height:96px;resize:vertical}.row-2{display:grid;gap:12px;grid-template-columns:1fr 1fr}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+.dialog-backdrop{position:fixed;inset:0;background:rgba(4,8,5,.62);display:none;align-items:flex-end;justify-content:center;z-index:40;padding:12px}.dialog-backdrop.open{display:flex}.dialog{width:min(760px,100%);max-height:min(88vh,900px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:16px}.dialog h3{margin:0 0 6px;font-size:22px}.dialog-sub{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.45}.form-grid{display:grid;gap:14px}.field label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:14px;padding:12px;outline:none}.field textarea{min-height:108px;resize:vertical}.row-2{display:grid;gap:12px;grid-template-columns:1fr 1fr}.dialog-actions{display:flex;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap}.actions-right{display:flex;gap:8px;flex-wrap:wrap}
+.section-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:18px;padding:12px}
+.section-title{margin:0 0 10px;font-size:14px;color:#dfeadf;font-weight:700}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}.chip-btn{font-size:12px;padding:8px 12px}.chip-btn.active{background:rgba(158,212,138,.18);color:#eff9ec;border-color:rgba(158,212,138,.28)}
+.segmented{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.seg-btn{padding:10px 8px;border-radius:14px;font-size:12px;text-align:center}.seg-btn.active{background:rgba(158,212,138,.18);color:#eff9ec;border-color:rgba(158,212,138,.28)}
 .help-list{margin:0;padding-left:18px;color:#d7e5d8;display:grid;gap:10px}.help-list li{line-height:1.45}.help-examples{display:grid;gap:8px;margin-top:12px}.example-chip{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:#dfeadf;font-size:13px}
-@media (max-width:520px){.capture-box{flex-wrap:wrap}.capture-input{width:100%;flex:1 0 100%}.add-btn{margin-left:auto}.row-2{grid-template-columns:1fr}.helper-row{align-items:flex-start;flex-direction:column}}
+@media (max-width:640px){.capture-box{flex-wrap:wrap}.capture-input{width:100%;flex:1 0 100%}.add-btn{margin-left:auto}.row-2{grid-template-columns:1fr}.helper-row{align-items:flex-start;flex-direction:column}.segmented{grid-template-columns:repeat(2,1fr)}.dialog-actions{flex-direction:column-reverse;align-items:stretch}.actions-right{width:100%}.actions-right .small-btn{flex:1}}
 @media (min-width:700px){.page{padding:18px 16px 42px}.panel-grid{grid-template-columns:1fr 1fr}.dialog-backdrop{align-items:center}}
 </style>
 </head>
 <body>
 <div class="page"><div class="content">
-<section class="hero"><div class="hero-top"><div class="eyebrow">Shared Home Board</div><h1>Garden Board</h1><p class="sub">Supabase-backed shared board. This build updates the UI immediately after writes, even if Realtime is slow.</p></div>
+<section class="hero"><div class="hero-top"><div class="eyebrow">Shared Home Board</div><h1>Garden Board</h1><p class="sub">Supabase-backed shared board with a richer detail editor for cleanup after quick add.</p></div>
 <div class="capture"><div class="capture-box">
 <input id="quickInput" class="capture-input" placeholder="Add task… e.g. Skye groceries tomorrow, Wes bins Tuesday morning" />
 <div class="toggle" id="ownerToggle"><button type="button" data-owner="Wes" class="active">Wes</button><button type="button" data-owner="Skye">Skye</button></div>
@@ -38,12 +42,96 @@
 <section class="notes"><h2>Garden Notes</h2><textarea id="notesBox" class="notes-box" placeholder="Notes stay local in this version."></textarea><div class="toolbar"><button id="clearNotesBtn" type="button" class="small-btn">Clear notes</button></div><div class="footer-status">Tasks sync through Supabase. Notes are still local for now.</div></section>
 </div></div>
 
-<div id="editDialogBackdrop" class="dialog-backdrop" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="editTitle"><h3 id="editTitle">Edit Task</h3><div class="form-grid">
-<div class="field"><label for="editTaskTitle">Task</label><input id="editTaskTitle" type="text" /></div>
-<div class="row-2"><div class="field"><label for="editTaskOwner">Owner</label><select id="editTaskOwner"><option value="Wes">Wes</option><option value="Skye">Skye</option></select></div><div class="field"><label for="editTaskPanel">Panel</label><select id="editTaskPanel"><option value="upcoming">Upcoming</option><option value="inMotion">In Motion</option><option value="waiting">Waiting / Someday</option><option value="done">Done</option></select></div></div>
-<div class="row-2"><div class="field"><label for="editTaskDue">Due</label><input id="editTaskDue" type="text" placeholder="Today, tomorrow, Tuesday morning..." /></div><div class="field"><label for="editTaskTag">Tag</label><input id="editTaskTag" type="text" placeholder="Kitchen, Repair, Family..." /></div></div>
-<div class="field"><label for="editTaskDesc">Description</label><textarea id="editTaskDesc"></textarea></div>
-</div><div class="dialog-actions"><button id="deleteTaskBtn" type="button" class="small-btn danger">Delete</button><button id="cancelEditBtn" type="button" class="small-btn">Cancel</button><button id="saveEditBtn" type="button" class="small-btn">Save</button></div></div></div>
+<div id="editDialogBackdrop" class="dialog-backdrop" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <h3 id="editTitle">Task Details</h3>
+  <p class="dialog-sub">Quick add stays fast. Use this view when you want cleaner dates, tags, notes, or to move a task around deliberately.</p>
+  <div class="form-grid">
+    <div class="field">
+      <label for="editTaskTitle">Task title</label>
+      <input id="editTaskTitle" type="text" />
+    </div>
+
+    <div class="row-2">
+      <div class="section-card">
+        <div class="section-title">Owner</div>
+        <div class="chip-row" id="modalOwnerChips">
+          <button type="button" class="chip-btn" data-owner-chip="Wes">Wes</button>
+          <button type="button" class="chip-btn" data-owner-chip="Skye">Skye</button>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label for="editTaskOwner" style="display:none;">Owner select</label>
+          <select id="editTaskOwner">
+            <option value="Wes">Wes</option>
+            <option value="Skye">Skye</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">Panel</div>
+        <div class="segmented" id="modalPanelButtons">
+          <button type="button" class="seg-btn" data-panel-btn="upcoming">Upcoming</button>
+          <button type="button" class="seg-btn" data-panel-btn="inMotion">In Motion</button>
+          <button type="button" class="seg-btn" data-panel-btn="waiting">Waiting</button>
+          <button type="button" class="seg-btn" data-panel-btn="done">Done</button>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label for="editTaskPanel" style="display:none;">Panel select</label>
+          <select id="editTaskPanel">
+            <option value="upcoming">Upcoming</option>
+            <option value="inMotion">In Motion</option>
+            <option value="waiting">Waiting / Someday</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Due</div>
+      <div class="field">
+        <label for="editTaskDue">Free text due label</label>
+        <input id="editTaskDue" type="text" placeholder="Today, tomorrow, Tuesday morning..." />
+      </div>
+      <div class="chip-row" id="dueQuickButtons" style="margin-top:10px;">
+        <button type="button" class="chip-btn" data-due-chip="Today">Today</button>
+        <button type="button" class="chip-btn" data-due-chip="Tomorrow">Tomorrow</button>
+        <button type="button" class="chip-btn" data-due-chip="This week">This week</button>
+        <button type="button" class="chip-btn" data-due-chip="This weekend">This weekend</button>
+        <button type="button" class="chip-btn" data-due-chip="">Clear due</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Tag</div>
+      <div class="field">
+        <label for="editTaskTag">Tag</label>
+        <input id="editTaskTag" type="text" placeholder="Kitchen, Repair, Family..." />
+      </div>
+      <div class="chip-row" id="tagQuickButtons" style="margin-top:10px;">
+        <button type="button" class="chip-btn" data-tag-chip="Kitchen">Kitchen</button>
+        <button type="button" class="chip-btn" data-tag-chip="House">House</button>
+        <button type="button" class="chip-btn" data-tag-chip="Family">Family</button>
+        <button type="button" class="chip-btn" data-tag-chip="Repair">Repair</button>
+        <button type="button" class="chip-btn" data-tag-chip="Outside">Outside</button>
+        <button type="button" class="chip-btn" data-tag-chip="Shopping">Shopping</button>
+        <button type="button" class="chip-btn" data-tag-chip="">Clear tag</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="editTaskDesc">Description / notes</label>
+      <textarea id="editTaskDesc"></textarea>
+    </div>
+  </div>
+  <div class="dialog-actions">
+    <button id="deleteTaskBtn" type="button" class="small-btn danger">Delete task</button>
+    <div class="actions-right">
+      <button id="cancelEditBtn" type="button" class="small-btn">Cancel</button>
+      <button id="saveEditBtn" type="button" class="small-btn">Save changes</button>
+    </div>
+  </div>
+</div></div>
 
 <div id="helpDialogBackdrop" class="dialog-backdrop" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><h3 id="helpTitle">Quick Add Guide</h3>
 <ul class="help-list">
@@ -60,7 +148,8 @@
   <div class="example-chip">plan outing this weekend</div>
 </div>
 <div class="dialog-actions">
-  <button id="closeHelpBtn" type="button" class="small-btn">Close</button>
+  <div></div>
+  <div class="actions-right"><button id="closeHelpBtn" type="button" class="small-btn">Close</button></div>
 </div>
 </div></div>
 
@@ -69,7 +158,7 @@
 const SUPABASE_URL = "https://pssgbrtyhwoumhiynwlj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_Ew7XkaYZV2w9vzFndOAq3w_ND4G6JQM";
 const HOUSEHOLD_ID = "ca0ebdfc-f533-46d5-b8bb-1c6f6d0b6248";
-const NOTES_KEY = "garden-board-notes-sync-v2";
+const NOTES_KEY = "garden-board-notes-sync-v3";
 
 (() => {
 const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'waiting',title:'Waiting / Someday'},{key:'done',title:'Done'}];
@@ -93,6 +182,8 @@ const $=id=>document.getElementById(id);
 const panelGrid=$('panelGrid'), quickInput=$('quickInput'), addTaskBtn=$('addTaskBtn'), ownerToggle=$('ownerToggle'), notesBox=$('notesBox'), syncStatus=$('syncStatus');
 const editBackdrop=$('editDialogBackdrop'), editTaskTitle=$('editTaskTitle'), editTaskOwner=$('editTaskOwner'), editTaskPanel=$('editTaskPanel'), editTaskDue=$('editTaskDue'), editTaskTag=$('editTaskTag'), editTaskDesc=$('editTaskDesc');
 const helpBackdrop=$('helpDialogBackdrop');
+const modalOwnerChips = document.getElementById('modalOwnerChips');
+const modalPanelButtons = document.getElementById('modalPanelButtons');
 
 let selectedOwner='Wes', editingTaskId=null, tasks=[], supabase=null, channel=null;
 
@@ -100,6 +191,15 @@ function setStatus(text){ syncStatus.textContent='Sync status: ' + text; }
 function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 function clean(text){ return text.replace(/\s{2,}/g,' ').replace(/\s+,/g,',').replace(/\s+\./g,'.').replace(/^[,\-–:\s]+/,'').replace(/[,\-–:\s]+$/,'').trim(); }
 function isoNow(){ return new Date().toISOString(); }
+
+function syncModalButtons(){
+  modalOwnerChips.querySelectorAll('[data-owner-chip]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-owner-chip') === editTaskOwner.value);
+  });
+  modalPanelButtons.querySelectorAll('[data-panel-btn]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-panel-btn') === editTaskPanel.value);
+  });
+}
 
 function extractOwner(text,fallback){
   let owner=fallback, working=text.trim();
@@ -248,6 +348,7 @@ function openEditDialog(task){
   editTaskDue.value=task.due_text||'';
   editTaskTag.value=task.tag||'';
   editTaskDesc.value=task.description||'';
+  syncModalButtons();
   editBackdrop.classList.add('open');
   editBackdrop.setAttribute('aria-hidden','false');
 }
@@ -322,6 +423,33 @@ async function init(){
 addTaskBtn.addEventListener('click', addQuickTask);
 quickInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addQuickTask(); } });
 ownerToggle.addEventListener('click', e=>{ const btn=e.target.closest('button[data-owner]'); if(btn) setSelectedOwner(btn.dataset.owner); });
+
+modalOwnerChips.addEventListener('click', e => {
+  const btn = e.target.closest('[data-owner-chip]');
+  if(!btn) return;
+  editTaskOwner.value = btn.getAttribute('data-owner-chip');
+  syncModalButtons();
+});
+modalPanelButtons.addEventListener('click', e => {
+  const btn = e.target.closest('[data-panel-btn]');
+  if(!btn) return;
+  editTaskPanel.value = btn.getAttribute('data-panel-btn');
+  syncModalButtons();
+});
+editTaskOwner.addEventListener('change', syncModalButtons);
+editTaskPanel.addEventListener('change', syncModalButtons);
+
+document.querySelectorAll('[data-due-chip]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    editTaskDue.value = btn.getAttribute('data-due-chip');
+  });
+});
+document.querySelectorAll('[data-tag-chip]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    editTaskTag.value = btn.getAttribute('data-tag-chip');
+  });
+});
+
 document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 document.getElementById('cancelEditBtn').addEventListener('click', closeEditDialog);
 document.getElementById('deleteTaskBtn').addEventListener('click', async ()=>{
