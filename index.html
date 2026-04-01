@@ -689,9 +689,8 @@ function removeTaskInMemory(id) {
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(async () => {
-    if (document.hidden) return;
     try { await loadTasks(true); } catch (err) { console.error('Polling load failed', err); }
-  }, 4000);
+  }, 3000);
 }
 
 async function addQuickTask() {
@@ -722,6 +721,7 @@ async function addQuickTask() {
     return;
   }
   upsertTaskInMemory(result.data);
+  try { await loadTasks(true); } catch (e) {}
   quickInput.value = '';
   quickInput.focus();
 }
@@ -740,7 +740,10 @@ async function moveTaskToNext(taskId) {
   const patch = { panel: next, archived:false, archived_at:null, updated_at: isoNow(), completed_at: next === 'done' ? isoNow() : null };
   const result = await supabase.from('tasks').update(patch).eq('id', taskId).select();
   if (result.error) alert('Could not move task: ' + result.error.message);
-  else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+  else if (result.data && result.data[0]) {
+    upsertTaskInMemory(result.data[0]);
+    try { await loadTasks(true); } catch (e) {}
+  }
   else alert('Could not move task: task update did not return a row.');
 }
 
@@ -754,7 +757,10 @@ async function handleCardAction(e) {
     const patch = { panel:'done', archived:false, archived_at:null, due_text: task.due_text || 'Finished', completed_at: isoNow(), updated_at: isoNow() };
     const result = await supabase.from('tasks').update(patch).eq('id', id).select();
     if (result.error) alert('Could not update task: ' + result.error.message);
-    else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+    else if (result.data && result.data[0]) {
+      upsertTaskInMemory(result.data[0]);
+      try { await loadTasks(true); } catch (e) {}
+    }
     else alert('Could not update task: task update did not return a row.');
     return;
   }
@@ -763,7 +769,10 @@ async function handleCardAction(e) {
     const patch = { panel: reopenedDue ? 'upcoming' : 'backlog', archived:false, archived_at:null, due_text: reopenedDue, completed_at: null, updated_at: isoNow() };
     const result = await supabase.from('tasks').update(patch).eq('id', id).select();
     if (result.error) alert('Could not reopen task: ' + result.error.message);
-    else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+    else if (result.data && result.data[0]) {
+      upsertTaskInMemory(result.data[0]);
+      try { await loadTasks(true); } catch (e) {}
+    }
     else alert('Could not reopen task: task update did not return a row.');
     return;
   }
@@ -771,7 +780,10 @@ async function handleCardAction(e) {
     const patch = { panel:'done', archived:false, archived_at:null, updated_at: isoNow() };
     const result = await supabase.from('tasks').update(patch).eq('id', id).select();
     if (result.error) alert('Could not restore task: ' + result.error.message);
-    else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+    else if (result.data && result.data[0]) {
+      upsertTaskInMemory(result.data[0]);
+      try { await loadTasks(true); } catch (e) {}
+    }
     else alert('Could not restore task: task update did not return a row.');
     return;
   }
@@ -914,8 +926,10 @@ async function saveEdit() {
     alert('Could not save task: ' + result.error.message);
     return;
   }
-  if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
-  else {
+  if (result.data && result.data[0]) {
+    upsertTaskInMemory(result.data[0]);
+    try { await loadTasks(true); } catch (e) {}
+  } else {
     alert('Could not save task: task update did not return a row.');
     return;
   }
@@ -941,6 +955,7 @@ async function archiveDoneTasks() {
     return;
   }
   (result.data || []).forEach(upsertTaskInMemory);
+  try { await loadTasks(true); } catch (e) {}
   settings.showArchive = true;
   saveSettings();
   render();
