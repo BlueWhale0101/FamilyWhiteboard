@@ -141,7 +141,7 @@ transform:rotate(10deg);pointer-events:none}
 .chip-row{display:flex;flex-wrap:wrap;gap:8px}
 .chip-btn{font-size:13px;padding:10px 14px}
 .chip-btn.active{background:rgba(158,212,138,.18);color:#eff9ec;border-color:rgba(158,212,138,.28)}
-.segmented{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.segmented{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .seg-btn{padding:12px 8px;border-radius:14px;font-size:13px;text-align:center}
 .seg-btn.active{background:rgba(158,212,138,.18);color:#eff9ec;border-color:rgba(158,212,138,.28)}
 .help-list{margin:0;padding-left:18px;color:#d7e5d8;display:grid;gap:10px}
@@ -285,9 +285,10 @@ transform:rotate(10deg);pointer-events:none}
           <button type="button" class="seg-btn" data-panel-btn="upcoming">Upcoming</button>
           <button type="button" class="seg-btn" data-panel-btn="inMotion">In Motion</button>
           <button type="button" class="seg-btn" data-panel-btn="waiting">Waiting</button>
+          <button type="button" class="seg-btn" data-panel-btn="backlog">Backlog</button>
           <button type="button" class="seg-btn" data-panel-btn="done">Done</button>
         </div>
-        <div class="field" style="margin-top:10px;"><select id="editTaskPanel"><option value="upcoming">Upcoming</option><option value="inMotion">In Motion</option><option value="waiting">Waiting / Someday</option><option value="done">Done</option></select></div>
+        <div class="field" style="margin-top:10px;"><select id="editTaskPanel"><option value="upcoming">Upcoming</option><option value="inMotion">In Motion</option><option value="waiting">Waiting / Someday</option><option value="backlog">Backlog</option><option value="done">Done</option></select></div>
       </div>
     </div>
     <div class="section-card">
@@ -364,8 +365,8 @@ const TUTORIAL_SEEN_KEY = "garden-board-tutorial-seen-v9";
 const SETTINGS_KEY = "garden-board-settings-v9";
 
 (() => {
-const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'waiting',title:'Waiting / Someday'},{key:'done',title:'Done'},{key:'archived',title:'Archived'}];
-const DEFAULT_PANEL_STATE = {upcoming:true,inMotion:false,waiting:false,done:false,archived:false};
+const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'waiting',title:'Waiting / Someday'},{key:'backlog',title:'Backlog'},{key:'done',title:'Done'},{key:'archived',title:'Archived'}];
+const DEFAULT_PANEL_STATE = {upcoming:true,inMotion:false,waiting:false,backlog:false,done:false,archived:false};
 const DUE_PATTERNS=[
 [/\bday after tomorrow\b/i,'Day after tomorrow'],
 [/\btomorrow morning\b/i,'Tomorrow morning'],[/\btomorrow afternoon\b/i,'Tomorrow afternoon'],[/\btomorrow night\b/i,'Tomorrow night'],
@@ -397,6 +398,8 @@ let filters = { search:'', tag:'', time:'' };
 let filterPanelOpen = false;
 let tutorialStep = 0;
 let settings = loadSettings();
+let voiceTimeout = null;
+const VOICE_TIMEOUT_MS = 8000;
 let recognition = null;
 let isListening = false;
 let voiceSupported = false;
@@ -482,9 +485,20 @@ function extractDue(text) {
 
 function normalizeVoiceText(raw) {
   let text = String(raw || '').trim();
+
+  // Strong owner-position fixes for Skye
   text = text.replace(/^sky\b/i, 'Skye');
   text = text.replace(/\bfor\s+sky\b/i, 'for Skye');
   text = text.replace(/\bto\s+sky\b/i, 'to Skye');
+
+  // Strong voice-only bias for Wes:
+  // if the first dictated token starts with W, normalize it to Wes.
+  text = text.replace(/^w[^\s,:'"-]*\b/i, 'Wes');
+
+  // Additional owner-position fixes for common recognizer variants.
+  text = text.replace(/\bfor\s+w[^\s,:'"-]*\b/i, 'for Wes');
+  text = text.replace(/\bto\s+w[^\s,:'"-]*\b/i, 'to Wes');
+
   return text;
 }
 
@@ -493,7 +507,7 @@ function parseQuickText(raw) {
   const o=extractOwner(working, selectedOwner); working=o.text;
   const d=extractDue(working); working=d.text;
   if(!working) working=String(raw || '').trim();
-  return {title:working,owner:o.owner,panel:'upcoming',due:d.due,tag:'',description:''};
+  return {title:working,owner:o.owner,panel:d.due ? 'upcoming' : 'backlog',due:d.due,tag:'',description:''};
 }
 
 function matchesFilters(task) {
@@ -544,7 +558,7 @@ function syncFilterChips() {
 }
 
 function visiblePanels() {
-  if (settings.focusMode) return PANELS.filter(p => p.key === 'upcoming');
+  if (settings.focusMode) return PANELS.filter(p => p.key === 'upcoming' || p.key === 'backlog');
   return PANELS.filter(p => settings.showArchive ? true : p.key !== 'archived');
 }
 
@@ -636,20 +650,30 @@ function togglePanel(e) {
 }
 
 function nextPanel(k) {
-  return k==='upcoming' ? 'inMotion' : k==='inMotion' ? 'waiting' : k==='waiting' ? 'done' : 'upcoming';
+  return k==='backlog' ? 'inMotion' : k==='upcoming' ? 'inMotion' : k==='inMotion' ? 'waiting' : k==='waiting' ? 'done' : 'upcoming';
 }
 
 async function loadTasks(silent=false) {
   const result = await supabase.from('tasks').select('*').eq('household_id', HOUSEHOLD_ID).order('created_at', { ascending: false });
   if (result.error) throw result.error;
-  tasks = (result.data || []).map(t => Object.assign({archived:false, archived_at:null}, t, {panel: t.archived ? 'archived' : t.panel}));
+  tasks = (result.data || []).map(t => {
+    const base = Object.assign({archived:false, archived_at:null}, t);
+    let panel = base.archived ? 'archived' : base.panel;
+    if (!base.archived && panel === 'upcoming' && !String(base.due_text || '').trim()) panel = 'backlog';
+    return Object.assign(base, {panel});
+  });
   lastLoadSucceeded = true;
   render();
   if (!silent) updateStatus();
 }
 
 function upsertTaskInMemory(task) {
-  const normalized = Object.assign({archived:false, archived_at:null}, task, {panel: task.archived ? 'archived' : task.panel});
+  const normalized = (() => {
+    const base = Object.assign({archived:false, archived_at:null}, task);
+    let panel = base.archived ? 'archived' : base.panel;
+    if (!base.archived && panel === 'upcoming' && !String(base.due_text || '').trim()) panel = 'backlog';
+    return Object.assign(base, {panel});
+  })();
   const idx = tasks.findIndex(t => t.id === normalized.id);
   if (idx === -1) tasks.unshift(normalized);
   else tasks[idx] = normalized;
@@ -681,7 +705,7 @@ async function addQuickTask() {
     household_id: HOUSEHOLD_ID,
     title,
     owner: parsed.owner,
-    panel: 'upcoming',
+    panel: parsed.due ? 'upcoming' : 'backlog',
     due_text: parsed.due,
     tag: '',
     description: '',
@@ -735,7 +759,8 @@ async function handleCardAction(e) {
     return;
   }
   if (action === 'reopen') {
-    const patch = { panel:'upcoming', archived:false, archived_at:null, due_text: task.due_text === 'Finished' ? '' : task.due_text, completed_at: null, updated_at: isoNow() };
+    const reopenedDue = task.due_text === 'Finished' ? '' : task.due_text;
+    const patch = { panel: reopenedDue ? 'upcoming' : 'backlog', archived:false, archived_at:null, due_text: reopenedDue, completed_at: null, updated_at: isoNow() };
     const result = await supabase.from('tasks').update(patch).eq('id', id).select();
     if (result.error) alert('Could not reopen task: ' + result.error.message);
     else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
@@ -871,10 +896,11 @@ async function saveEdit() {
     return;
   }
   const current = tasks.find(t => t.id === editingTaskId);
+  const normalizedPanel = (editTaskPanel.value === 'upcoming' && !editTaskDue.value.trim()) ? 'backlog' : editTaskPanel.value;
   const patch = {
     title,
     owner: editTaskOwner.value,
-    panel: editTaskPanel.value,
+    panel: normalizedPanel,
     archived:false,
     archived_at:null,
     due_text: editTaskDue.value.trim(),
@@ -972,6 +998,8 @@ function setupVoiceRecognition() {
   recognition.onstart = () => {
     isListening = true;
     micBtn.classList.add('listening');
+    if (voiceTimeout) clearTimeout(voiceTimeout);
+    voiceTimeout = setTimeout(() => { try { recognition.stop(); } catch(e) {} }, VOICE_TIMEOUT_MS);
     setVoiceStatus('Listening… say a task like “Skye groceries tomorrow”');
   };
   recognition.onresult = (event) => {
@@ -985,12 +1013,14 @@ function setupVoiceRecognition() {
     if (finalText) {
       quickInput.value = normalizeVoiceText(finalText);
       setVoiceStatus('Voice captured. Tap + to add, or edit the text first if needed.');
+      try { recognition.stop(); } catch(e) {}
     } else if (interimText) {
       quickInput.value = normalizeVoiceText(interimText);
       setVoiceStatus('Hearing: ' + interimText);
     }
   };
   recognition.onerror = (event) => {
+    try { recognition.stop(); } catch(e) {}
     let msg = 'Voice error';
     if (event.error === 'not-allowed') msg = 'Microphone permission was blocked';
     else if (event.error === 'no-speech') msg = 'No speech heard';
@@ -1001,6 +1031,10 @@ function setupVoiceRecognition() {
   recognition.onend = () => {
     isListening = false;
     micBtn.classList.remove('listening');
+    if (voiceTimeout) {
+      clearTimeout(voiceTimeout);
+      voiceTimeout = null;
+    }
     if (!quickInput.value.trim()) {
       setVoiceStatus('Voice stopped. Try again if nothing was captured.');
     }
