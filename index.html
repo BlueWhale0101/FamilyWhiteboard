@@ -482,20 +482,9 @@ function extractDue(text) {
 
 function normalizeVoiceText(raw) {
   let text = String(raw || '').trim();
-
-  // Strong owner-position fixes for Skye
   text = text.replace(/^sky\b/i, 'Skye');
   text = text.replace(/\bfor\s+sky\b/i, 'for Skye');
   text = text.replace(/\bto\s+sky\b/i, 'to Skye');
-
-  // Strong voice-only bias for Wes:
-  // if the first dictated token starts with W, normalize it to Wes.
-  text = text.replace(/^w[^\s,:'"-]*\b/i, 'Wes');
-
-  // Additional owner-position fixes for common recognizer variants.
-  text = text.replace(/\bfor\s+w[^\s,:'"-]*\b/i, 'for Wes');
-  text = text.replace(/\bto\s+w[^\s,:'"-]*\b/i, 'to Wes');
-
   return text;
 }
 
@@ -725,9 +714,10 @@ async function moveTaskToNext(taskId) {
   if (!task || task.panel === 'archived') return;
   const next = nextPanel(task.panel);
   const patch = { panel: next, archived:false, archived_at:null, updated_at: isoNow(), completed_at: next === 'done' ? isoNow() : null };
-  const result = await supabase.from('tasks').update(patch).eq('id', taskId).select().single();
+  const result = await supabase.from('tasks').update(patch).eq('id', taskId).select();
   if (result.error) alert('Could not move task: ' + result.error.message);
-  else upsertTaskInMemory(result.data);
+  else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+  else alert('Could not move task: task update did not return a row.');
 }
 
 async function handleCardAction(e) {
@@ -738,23 +728,26 @@ async function handleCardAction(e) {
 
   if (action === 'done') {
     const patch = { panel:'done', archived:false, archived_at:null, due_text: task.due_text || 'Finished', completed_at: isoNow(), updated_at: isoNow() };
-    const result = await supabase.from('tasks').update(patch).eq('id', id).select().single();
+    const result = await supabase.from('tasks').update(patch).eq('id', id).select();
     if (result.error) alert('Could not update task: ' + result.error.message);
-    else upsertTaskInMemory(result.data);
+    else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+    else alert('Could not update task: task update did not return a row.');
     return;
   }
   if (action === 'reopen') {
     const patch = { panel:'upcoming', archived:false, archived_at:null, due_text: task.due_text === 'Finished' ? '' : task.due_text, completed_at: null, updated_at: isoNow() };
-    const result = await supabase.from('tasks').update(patch).eq('id', id).select().single();
+    const result = await supabase.from('tasks').update(patch).eq('id', id).select();
     if (result.error) alert('Could not reopen task: ' + result.error.message);
-    else upsertTaskInMemory(result.data);
+    else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+    else alert('Could not reopen task: task update did not return a row.');
     return;
   }
   if (action === 'restore-archive') {
     const patch = { panel:'done', archived:false, archived_at:null, updated_at: isoNow() };
-    const result = await supabase.from('tasks').update(patch).eq('id', id).select().single();
+    const result = await supabase.from('tasks').update(patch).eq('id', id).select();
     if (result.error) alert('Could not restore task: ' + result.error.message);
-    else upsertTaskInMemory(result.data);
+    else if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+    else alert('Could not restore task: task update did not return a row.');
     return;
   }
   if (action === 'next-panel') {
@@ -890,12 +883,16 @@ async function saveEdit() {
     updated_at: isoNow(),
     completed_at: editTaskPanel.value === 'done' ? ((current && current.completed_at) || isoNow()) : null
   };
-  const result = await supabase.from('tasks').update(patch).eq('id', editingTaskId).select().single();
+  const result = await supabase.from('tasks').update(patch).eq('id', editingTaskId).select();
   if (result.error) {
     alert('Could not save task: ' + result.error.message);
     return;
   }
-  upsertTaskInMemory(result.data);
+  if (result.data && result.data[0]) upsertTaskInMemory(result.data[0]);
+  else {
+    alert('Could not save task: task update did not return a row.');
+    return;
+  }
   closeEditDialog();
 }
 
@@ -987,7 +984,7 @@ function setupVoiceRecognition() {
     }
     if (finalText) {
       quickInput.value = normalizeVoiceText(finalText);
-      setVoiceStatus('Voice captured. Review if needed, then tap + to add.');
+      setVoiceStatus('Voice captured. Tap + to add, or edit the text first if needed.');
     } else if (interimText) {
       quickInput.value = normalizeVoiceText(interimText);
       setVoiceStatus('Hearing: ' + interimText);
@@ -1004,6 +1001,9 @@ function setupVoiceRecognition() {
   recognition.onend = () => {
     isListening = false;
     micBtn.classList.remove('listening');
+    if (!quickInput.value.trim()) {
+      setVoiceStatus('Voice stopped. Try again if nothing was captured.');
+    }
   };
 }
 function toggleVoiceInput() {
