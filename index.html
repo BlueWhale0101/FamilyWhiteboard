@@ -1,20 +1,20 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Garden Board — Supabase Sync v6</title>
+<title>Garden Board — Supabase Sync v9</title>
 <style>
-:root{--bg-1:#08100b;--bg-2:#0d1711;--panel:#132019;--panel-2:#17261d;--card:#223328;--card-2:#2a3d30;--line:#355240;--text:#eef7ef;--muted:#aec0b2;--accent:#9ed48a;--accent-2:#6ea96f;--danger:#d97272;--shadow:0 14px 34px rgba(0,0,0,.34);--today:#d7f1a4}
+:root{--bg-1:#08100b;--bg-2:#0d1711;--panel:#132019;--panel-2:#17261d;--card:#223328;--card-2:#2a3d30;--line:#355240;--text:#eef7ef;--muted:#aec0b2;--accent:#9ed48a;--accent-2:#6ea96f;--danger:#d97272;--shadow:0 14px 34px rgba(0,0,0,.34);--today:#d7f1a4;--wes:#2f6b47;--skye:#6a4a77}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:
 radial-gradient(circle at top left, rgba(110,169,111,.12), transparent 28%),
 radial-gradient(circle at bottom right, rgba(158,212,138,.10), transparent 34%),
 linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%)}
-button,input,textarea,select{font:inherit}
 body{font-size:18px;line-height:1.45}
-.page{max-width:820px;margin:0 auto;padding:14px 12px 36px;position:relative}
+body.reading-font{font-family:Arial,Helvetica,sans-serif;letter-spacing:.02em;word-spacing:.03em}
+button,input,textarea,select{font:inherit}
+.page{max-width:860px;margin:0 auto;padding:14px 12px 36px;position:relative}
 .page::before,.page::after{content:"";position:fixed;width:120px;height:320px;pointer-events:none;opacity:.24;z-index:0}
 .page::before{left:-18px;top:22px;background:
 radial-gradient(circle at 58px 22px, rgba(158,212,138,.9) 0 10px, transparent 11px),
@@ -37,25 +37,24 @@ transform:rotate(7deg)}
 linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)),
 repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0px, rgba(255,255,255,.022) 1px, transparent 1px, transparent 42px);
 background-color:var(--panel);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}
-.hero-top{padding:18px 16px 14px;position:relative}
+.hero-top{padding:18px 16px 8px;position:relative}
 .hero-top::after{content:"🌿  🪴  🍃";position:absolute;right:14px;top:12px;font-size:22px;opacity:.95}
 .eyebrow{color:var(--accent);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
 h1{margin:0;font-size:32px;line-height:1.05}
 .sub{margin:10px 0 0;max-width:640px;color:var(--muted);font-size:15px;line-height:1.55}
-
 .capture{position:sticky;top:0;z-index:3;padding:12px;backdrop-filter:blur(10px);background:linear-gradient(180deg, rgba(8,16,11,.92), rgba(8,16,11,.75));border-top:1px solid rgba(255,255,255,.04)}
 .capture-box{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.18)}
 .capture-input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-size:18px;padding:4px 2px}
 .capture-input::placeholder{color:#91a392}
 .toggle{display:flex;gap:6px}
-.toggle button,.add-btn,.mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn,.panel-toggle,.filter-toggle,.summary-chip,.filter-chip{appearance:none;border:none}
+.toggle button,.add-btn,.mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn,.panel-toggle,.filter-toggle,.summary-chip,.filter-chip,.setting-chip{appearance:none;border:none}
 .toggle button{background:#294033;color:#d7e5d8;border-radius:999px;padding:12px 15px;font-size:14px;font-weight:700;border:1px solid rgba(255,255,255,.05)}
 .toggle .active{background:var(--accent);color:#102012}
 .add-btn{background:var(--accent);color:#112014;border-radius:14px;width:48px;height:48px;font-size:28px;font-weight:700;line-height:1}
-.helper-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
-.helper{color:var(--muted);font-size:12px;line-height:1.45}
-.small-ghost{background:rgba(255,255,255,.04);color:#d7e5d8;border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:8px 13px;font-size:12px}
-.status-pill{display:inline-block;margin-top:10px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
+.top-utility-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.small-ghost,.setting-chip{background:rgba(255,255,255,.04);color:#d7e5d8;border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:8px 13px;font-size:12px}
+.setting-chip.active{background:rgba(158,212,138,.18);color:#eff9ec;border-color:rgba(158,212,138,.28)}
+.status-pill{display:inline-flex;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
 
 .today-spotlight{margin-top:14px;background:linear-gradient(180deg, rgba(215,241,164,.12), rgba(158,212,138,.07));border:1px solid rgba(215,241,164,.22);border-radius:22px;padding:14px;box-shadow:var(--shadow)}
 .today-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
@@ -84,6 +83,9 @@ h1{margin:0;font-size:32px;line-height:1.05}
 .summary-chip{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:8px 12px;font-size:12px}
 .summary-chip.strong{background:rgba(158,212,138,.18);color:#eff9ec;border-color:rgba(158,212,138,.28)}
 
+.done-tools{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:12px 14px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.done-tools-copy{font-size:14px;color:var(--muted)}
+
 .panel-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
 .panel{background:var(--panel-2);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
 .panel::after{content:"";position:absolute;inset:auto -26px -26px auto;width:120px;height:120px;background:
@@ -109,11 +111,14 @@ transform:rotate(10deg);pointer-events:none}
 .card.swipe-left{box-shadow:0 0 0 2px rgba(158,212,138,.18)}
 .card.swipe-right{box-shadow:0 0 0 2px rgba(215,241,164,.22)}
 .card.today-card{border-color:rgba(215,241,164,.22);background:linear-gradient(180deg, rgba(215,241,164,.09), rgba(255,255,255,.01)), var(--card)}
+.card.owner-wes::before{background:linear-gradient(180deg,var(--wes), #84d0a2)}
+.card.owner-skye::before{background:linear-gradient(180deg,var(--skye), #d6a7e5)}
+.owner{font-size:12px;padding:7px 10px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);color:#eef7ef}
+.owner.wes{background:rgba(47,107,71,.28);border-color:rgba(131,208,162,.22)}
+.owner.skye{background:rgba(106,74,119,.28);border-color:rgba(214,167,229,.22)}
 .swipe-hint{position:absolute;right:14px;bottom:12px;font-size:11px;color:var(--muted);opacity:.9}
 .task-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-left:8px}
 .title{margin:0;font-size:19px;line-height:1.3;font-weight:800;letter-spacing:.01em}
-.owner{font-size:12px;padding:7px 10px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);background:#2c4033;color:#eef7ef}
-.owner.skye{background:rgba(210,230,203,.12);color:#e7f3e3}
 .meta{padding-left:8px;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
 .meta-pill{background:var(--card-2);border:1px solid var(--line);color:#d8e5da;font-size:13px;padding:7px 11px;border-radius:999px}
 .meta-pill.today-pill{background:rgba(215,241,164,.16);border-color:rgba(215,241,164,.24);color:#f2fbdb;font-weight:700}
@@ -156,17 +161,27 @@ transform:rotate(10deg);pointer-events:none}
 .help-examples{display:grid;gap:8px;margin-top:12px}
 .example-chip{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:#dfeadf;font-size:14px}
 
+.tutorial-backdrop{position:fixed;inset:0;background:rgba(4,8,5,.72);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.tutorial-backdrop.open{display:flex}
+.tutorial-card{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px}
+.tutorial-step{display:none}
+.tutorial-step.active{display:block}
+.tutorial-title{font-size:24px;font-weight:800;margin:0 0 8px}
+.tutorial-body{font-size:16px;color:#e6efe7;line-height:1.6}
+.tutorial-actions{display:flex;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap}
+
 @media (max-width:640px){
   .capture-box{flex-wrap:wrap}
   .capture-input{width:100%;flex:1 0 100%}
   .add-btn{margin-left:auto}
   .row-2{grid-template-columns:1fr}
-  .helper-row{align-items:flex-start;flex-direction:column}
+  .top-utility-row{align-items:flex-start}
   .segmented{grid-template-columns:repeat(2,1fr)}
   .dialog-actions{flex-direction:column-reverse;align-items:stretch}
   .actions-right{width:100%}
   .actions-right .small-btn{flex:1}
   .today-header{align-items:flex-start;flex-direction:column}
+  .tutorial-actions{flex-direction:column-reverse}
 }
 @media (min-width:700px){
   .page{padding:18px 16px 42px}
@@ -177,17 +192,19 @@ transform:rotate(10deg);pointer-events:none}
 </head>
 <body>
 <div class="page"><div class="content">
-<section class="hero"><div class="hero-top"><div class="eyebrow">Shared Home Board</div><h1>Garden Board</h1><p class="sub">A calmer, more readable shared board with stronger “due today” emphasis, hidden filters, larger controls, and swipe gestures for edit and panel movement.</p></div>
+<section class="hero"><div class="hero-top"><div class="eyebrow">Shared Home Board</div><h1>Garden Board</h1><p class="sub">A garden whiteboard for Skye</p></div>
 <div class="capture"><div class="capture-box">
 <input id="quickInput" class="capture-input" placeholder="Add task… e.g. Skye groceries tomorrow, Wes bins Tuesday morning" />
 <div class="toggle" id="ownerToggle"><button type="button" data-owner="Wes" class="active">Wes</button><button type="button" data-owner="Skye">Skye</button></div>
 <button id="addTaskBtn" type="button" class="add-btn" aria-label="Add task">+</button>
 </div>
-<div class="helper-row">
-  <div class="helper">Quick add creates a task in <strong>Upcoming</strong>. It detects owner and simple due words from what you type.</div>
+<div class="top-utility-row">
   <button id="helpBtn" type="button" class="small-ghost">Quick add guide</button>
+  <button id="tutorialBtn" type="button" class="small-ghost">Tutorial</button>
+  <button id="readingFontBtn" type="button" class="setting-chip">Reading font</button>
+  <button id="focusModeBtn" type="button" class="setting-chip">Focus mode</button>
+  <div id="syncStatus" class="status-pill">Sync status: checking config…</div>
 </div>
-<div id="syncStatus" class="status-pill">Sync status: checking config…</div>
 </div></section>
 
 <section class="today-spotlight" id="todaySpotlight">
@@ -198,7 +215,7 @@ transform:rotate(10deg);pointer-events:none}
   <div id="todayList" class="today-list"></div>
 </section>
 
-<section class="filter-panel">
+<section class="filter-panel" id="filterPanel">
   <div class="filter-header">
     <div class="filter-title-wrap">
       <button id="filterPanelToggle" type="button" class="filter-toggle" aria-label="Toggle filters">▸</button>
@@ -230,6 +247,14 @@ transform:rotate(10deg);pointer-events:none}
         <button type="button" class="filter-chip" data-filter-group="time" data-filter-value="Afternoon">Afternoon</button>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="done-tools">
+  <div class="done-tools-copy">Keep finished tasks for future planning, but hide them from the live board.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button id="archiveDoneBtn" type="button" class="small-btn">Archive done tasks</button>
+    <button id="showArchiveBtn" type="button" class="small-btn">Show archived</button>
   </div>
 </section>
 
@@ -301,7 +326,7 @@ transform:rotate(10deg);pointer-events:none}
 <li>If you do not type a name, the <strong>Wes / Skye</strong> toggle decides the owner.</li>
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
-<li>Swipe <strong>left</strong> on a card to move it to the next panel.</li>
+<li>Swipe <strong>left</strong> on a card to move it to the next basket.</li>
 <li>Swipe <strong>right</strong> on a card to open edit.</li>
 </ul>
 <div class="help-examples">
@@ -313,17 +338,30 @@ transform:rotate(10deg);pointer-events:none}
 <div class="dialog-actions"><div></div><div class="actions-right"><button id="closeHelpBtn" type="button" class="small-btn">Close</button></div></div>
 </div></div>
 
+<div id="tutorialBackdrop" class="tutorial-backdrop" aria-hidden="true">
+  <div class="tutorial-card">
+    <div class="tutorial-step active" data-step="0"><div class="tutorial-title">Welcome to Garden Board</div><div class="tutorial-body">This is a garden whiteboard for Skye. The goal is simple: write things down fast, see what matters now, and keep the rest calm.</div></div>
+    <div class="tutorial-step" data-step="1"><div class="tutorial-title">Start at the top</div><div class="tutorial-body">Use the quick add box for almost everything. Type a short phrase like “Skye groceries tomorrow” or “Wes bins Tuesday morning” and tap the plus button.</div></div>
+    <div class="tutorial-step" data-step="2"><div class="tutorial-title">Check Today spotlight</div><div class="tutorial-body">If something is due today, it shows up in the spotlight section so it is easier to notice without scanning the whole board.</div></div>
+    <div class="tutorial-step" data-step="3"><div class="tutorial-title">Use baskets</div><div class="tutorial-body">Upcoming is open by default. The other baskets can stay closed until needed. Swipe left on a task to move it to the next basket, or swipe right to edit it.</div></div>
+    <div class="tutorial-step" data-step="4"><div class="tutorial-title">Use archive for memory</div><div class="tutorial-body">Archive done tasks when you want a clean board, then show archived later to review what you did for projects like parties, holidays, or travel prep.</div></div>
+    <div class="tutorial-actions"><button id="tutorialSkipBtn" type="button" class="small-btn">Skip</button><div class="actions-right"><button id="tutorialBackBtn" type="button" class="small-btn">Back</button><button id="tutorialNextBtn" type="button" class="small-btn">Next</button></div></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://pssgbrtyhwoumhiynwlj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_Ew7XkaYZV2w9vzFndOAq3w_ND4G6JQM";
 const HOUSEHOLD_ID = "ca0ebdfc-f533-46d5-b8bb-1c6f6d0b6248";
-const NOTES_KEY = "garden-board-notes-sync-v6";
-const PANEL_STATE_KEY = "garden-board-panel-state-v6";
+const NOTES_KEY = "garden-board-notes-sync-v9";
+const PANEL_STATE_KEY = "garden-board-panel-state-v9";
+const TUTORIAL_SEEN_KEY = "garden-board-tutorial-seen-v9";
+const SETTINGS_KEY = "garden-board-settings-v9";
 
 (() => {
-const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'waiting',title:'Waiting / Someday'},{key:'done',title:'Done'}];
-const DEFAULT_PANEL_STATE = {upcoming:true,inMotion:false,waiting:false,done:false};
+const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'waiting',title:'Waiting / Someday'},{key:'done',title:'Done'},{key:'archived',title:'Archived'}];
+const DEFAULT_PANEL_STATE = {upcoming:true,inMotion:false,waiting:false,done:false,archived:false};
 const DUE_PATTERNS=[
 [/\bday after tomorrow\b/i,'Day after tomorrow'],
 [/\btomorrow morning\b/i,'Tomorrow morning'],[/\btomorrow afternoon\b/i,'Tomorrow afternoon'],[/\btomorrow night\b/i,'Tomorrow night'],
@@ -346,13 +384,31 @@ const editBackdrop=$('editDialogBackdrop'), editTaskTitle=$('editTaskTitle'), ed
 const helpBackdrop=$('helpDialogBackdrop');
 const modalOwnerChips = $('modalOwnerChips');
 const modalPanelButtons = $('modalPanelButtons');
+const tutorialBackdrop = $('tutorialBackdrop');
 
 let selectedOwner='Wes', editingTaskId=null, tasks=[], supabase=null, channel=null;
 let pollTimer=null, lastLoadSucceeded=false, realtimeHealthy=false;
 let panelState = loadPanelState();
 let filters = { search:'', tag:'', time:'' };
 let filterPanelOpen = false;
+let tutorialStep = 0;
+let settings = loadSettings();
 
+function loadSettings() {
+  try {
+    return Object.assign({readingFont:false,focusMode:false,showArchive:false}, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'));
+  } catch (e) {
+    return {readingFont:false,focusMode:false,showArchive:false};
+  }
+}
+function saveSettings() {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  document.body.classList.toggle('reading-font', !!settings.readingFont);
+  $('readingFontBtn').classList.toggle('active', !!settings.readingFont);
+  $('focusModeBtn').classList.toggle('active', !!settings.focusMode);
+  $('showArchiveBtn').textContent = settings.showArchive ? 'Hide archived' : 'Show archived';
+  $('filterPanel').style.display = settings.focusMode ? 'none' : '';
+}
 function loadPanelState() {
   try {
     const raw = JSON.parse(localStorage.getItem(PANEL_STATE_KEY) || '{}');
@@ -439,13 +495,14 @@ function isTodayTask(task) {
 function renderTodaySpotlight() {
   const list = $('todayList');
   const count = $('todayCount');
-  const items = tasks.filter(t => isTodayTask(t) && t.panel !== 'done' && matchesFilters(t));
+  const items = tasks.filter(t => isTodayTask(t) && t.panel !== 'done' && t.panel !== 'archived' && matchesFilters(t));
   count.textContent = items.length + (items.length === 1 ? ' task' : ' tasks');
   if (!items.length) {
     list.innerHTML = '<div class="today-empty">Nothing marked for today right now.</div>';
     return;
   }
-  list.innerHTML = items.slice(0,5).map(t => `
+  const visible = settings.focusMode ? items.slice(0,3) : items.slice(0,5);
+  list.innerHTML = visible.map(t => `
     <div class="today-item">
       <div class="today-item-title">${esc(t.title)}</div>
       <div class="today-item-meta">${esc(t.owner || '')}${t.tag ? ' • ' + esc(t.tag) : ''}</div>
@@ -470,13 +527,19 @@ function syncFilterChips() {
   });
 }
 
+function visiblePanels() {
+  if (settings.focusMode) return PANELS.filter(p => p.key === 'upcoming');
+  return PANELS.filter(p => settings.showArchive ? true : p.key !== 'archived');
+}
+
 function render() {
   renderTodaySpotlight();
   renderFilterSummary();
   syncFilterChips();
+  saveSettings();
 
   panelGrid.innerHTML='';
-  PANELS.forEach(panel => {
+  visiblePanels().forEach(panel => {
     const allPanelTasks = tasks.filter(t => t.panel === panel.key);
     const panelTasks = allPanelTasks.filter(matchesFilters);
     const isOpen = !!panelState[panel.key];
@@ -486,7 +549,7 @@ function render() {
       body = panelTasks.map(renderCard).join('');
     } else {
       body = (filters.search || filters.tag || filters.time)
-        ? '<div class="empty filtered">No matching tasks in this panel for the current filters.</div>'
+        ? '<div class="empty filtered">No matching tasks in this basket for the current filters.</div>'
         : '<div class="empty">Nothing here right now.</div>';
     }
     const section=document.createElement('section');
@@ -513,19 +576,26 @@ function render() {
 }
 
 function renderCard(task) {
-  const ownerClass=task.owner==='Skye'?'owner skye':'owner';
+  const ownerClass = task.owner === 'Skye' ? 'owner skye' : 'owner wes';
+  const cardOwnerClass = task.owner === 'Skye' ? 'owner-skye' : 'owner-wes';
   const dueClass = isTodayTask(task) ? 'meta-pill today-pill' : 'meta-pill';
-  const dueText = task.panel==='done'
+  const dueText = task.panel==='done' || task.panel==='archived'
     ? `✅ ${esc(task.due_text || 'Finished')}`
     : `📅 ${esc(task.due_text || 'No due date')}`;
   const tagText = task.tag ? `<div class="meta-pill">🏷️ ${esc(task.tag)}</div>` : '';
   const descText = task.description ? `<p class="desc">${esc(task.description)}</p>` : '';
   const todayClass = isTodayTask(task) ? 'today-card' : '';
-  const quick = task.panel==='done'
-    ? `<div class="quick"><button class="mini-btn" data-action="reopen" data-id="${task.id}">Reopen</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`
-    : `<div class="quick"><button class="mini-btn" data-action="done" data-id="${task.id}">Done</button><button class="mini-btn" data-action="next-panel" data-id="${task.id}">Move</button><button class="icon-btn edit-btn" data-action="edit" data-id="${task.id}" aria-label="Edit task">✎</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
+  let quick = '';
+  if (task.panel === 'archived') {
+    quick = `<div class="quick"><button class="mini-btn" data-action="restore-archive" data-id="${task.id}">Restore</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
+  } else if (task.panel === 'done') {
+    quick = `<div class="quick"><button class="mini-btn" data-action="reopen" data-id="${task.id}">Reopen</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
+  } else {
+    quick = `<div class="quick"><button class="mini-btn" data-action="done" data-id="${task.id}">Done</button><button class="mini-btn" data-action="next-panel" data-id="${task.id}">Move</button><button class="icon-btn edit-btn" data-action="edit" data-id="${task.id}" aria-label="Edit task">✎</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
+  }
+  const hint = task.panel === 'archived' ? '' : '<div class="swipe-hint">← next basket • → edit</div>';
   return `
-    <article class="card ${todayClass}" data-id="${task.id}">
+    <article class="card ${todayClass} ${cardOwnerClass}" data-id="${task.id}">
       <div class="task-row">
         <h3 class="title">${esc(task.title)}</h3>
         <div class="${ownerClass}">${esc(task.owner || '')}</div>
@@ -536,7 +606,7 @@ function renderCard(task) {
       </div>
       ${descText}
       ${quick}
-      <div class="swipe-hint">← next panel • → edit</div>
+      ${hint}
     </article>
   `;
 }
@@ -555,16 +625,17 @@ function nextPanel(k) {
 async function loadTasks(silent=false) {
   const result = await supabase.from('tasks').select('*').eq('household_id', HOUSEHOLD_ID).order('created_at', { ascending: false });
   if (result.error) throw result.error;
-  tasks = result.data || [];
+  tasks = (result.data || []).map(t => Object.assign({archived:false, archived_at:null}, t, {panel: t.archived ? 'archived' : t.panel}));
   lastLoadSucceeded = true;
   render();
   if (!silent) updateStatus();
 }
 
 function upsertTaskInMemory(task) {
-  const idx = tasks.findIndex(t => t.id === task.id);
-  if (idx === -1) tasks.unshift(task);
-  else tasks[idx] = task;
+  const normalized = Object.assign({archived:false, archived_at:null}, task, {panel: task.archived ? 'archived' : task.panel});
+  const idx = tasks.findIndex(t => t.id === normalized.id);
+  if (idx === -1) tasks.unshift(normalized);
+  else tasks[idx] = normalized;
   tasks.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   render();
 }
@@ -597,6 +668,8 @@ async function addQuickTask() {
     due_text: parsed.due,
     tag: '',
     description: '',
+    archived: false,
+    archived_at: null,
     created_at: isoNow(),
     updated_at: isoNow(),
     completed_at: null
@@ -621,9 +694,9 @@ function setSelectedOwner(owner) {
 
 async function moveTaskToNext(taskId) {
   const task = tasks.find(t => t.id === taskId);
-  if (!task) return;
+  if (!task || task.panel === 'archived') return;
   const next = nextPanel(task.panel);
-  const patch = { panel: next, updated_at: isoNow(), completed_at: next === 'done' ? isoNow() : null };
+  const patch = { panel: next, archived:false, archived_at:null, updated_at: isoNow(), completed_at: next === 'done' ? isoNow() : null };
   const result = await supabase.from('tasks').update(patch).eq('id', taskId).select().single();
   if (result.error) alert('Could not move task: ' + result.error.message);
   else upsertTaskInMemory(result.data);
@@ -636,16 +709,23 @@ async function handleCardAction(e) {
   if (!task) return;
 
   if (action === 'done') {
-    const patch = { panel:'done', due_text: task.due_text || 'Finished', completed_at: isoNow(), updated_at: isoNow() };
+    const patch = { panel:'done', archived:false, archived_at:null, due_text: task.due_text || 'Finished', completed_at: isoNow(), updated_at: isoNow() };
     const result = await supabase.from('tasks').update(patch).eq('id', id).select().single();
     if (result.error) alert('Could not update task: ' + result.error.message);
     else upsertTaskInMemory(result.data);
     return;
   }
   if (action === 'reopen') {
-    const patch = { panel:'upcoming', due_text: task.due_text === 'Finished' ? '' : task.due_text, completed_at: null, updated_at: isoNow() };
+    const patch = { panel:'upcoming', archived:false, archived_at:null, due_text: task.due_text === 'Finished' ? '' : task.due_text, completed_at: null, updated_at: isoNow() };
     const result = await supabase.from('tasks').update(patch).eq('id', id).select().single();
     if (result.error) alert('Could not reopen task: ' + result.error.message);
+    else upsertTaskInMemory(result.data);
+    return;
+  }
+  if (action === 'restore-archive') {
+    const patch = { panel:'done', archived:false, archived_at:null, updated_at: isoNow() };
+    const result = await supabase.from('tasks').update(patch).eq('id', id).select().single();
+    if (result.error) alert('Could not restore task: ' + result.error.message);
     else upsertTaskInMemory(result.data);
     return;
   }
@@ -671,6 +751,8 @@ function attachSwipeHandlers() {
     let currentX = 0;
     let dragging = false;
     const id = card.getAttribute('data-id');
+    const task = tasks.find(t => t.id === id);
+    if (task && task.panel === 'archived') return;
 
     const onStart = x => {
       startX = x;
@@ -715,7 +797,7 @@ function openEditDialog(task) {
   editingTaskId = task.id;
   editTaskTitle.value = task.title || '';
   editTaskOwner.value = task.owner || 'Wes';
-  editTaskPanel.value = task.panel || 'upcoming';
+  editTaskPanel.value = task.panel === 'archived' ? 'done' : (task.panel || 'upcoming');
   editTaskDue.value = task.due_text || '';
   editTaskTag.value = task.tag || '';
   editTaskDesc.value = task.description || '';
@@ -740,6 +822,27 @@ function closeHelpDialog() {
   helpBackdrop.setAttribute('aria-hidden','true');
 }
 
+function renderTutorialStep() {
+  tutorialBackdrop.querySelectorAll('.tutorial-step').forEach((el, idx) => {
+    el.classList.toggle('active', idx === tutorialStep);
+  });
+  $('tutorialBackBtn').style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
+  $('tutorialNextBtn').textContent = tutorialStep === 4 ? 'Finish' : 'Next';
+}
+
+function openTutorial() {
+  tutorialStep = 0;
+  renderTutorialStep();
+  tutorialBackdrop.classList.add('open');
+  tutorialBackdrop.setAttribute('aria-hidden','false');
+}
+
+function closeTutorial(markSeen=true) {
+  tutorialBackdrop.classList.remove('open');
+  tutorialBackdrop.setAttribute('aria-hidden','true');
+  if (markSeen) localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+}
+
 async function saveEdit() {
   const title = editTaskTitle.value.trim();
   if (!title) {
@@ -751,6 +854,8 @@ async function saveEdit() {
     title,
     owner: editTaskOwner.value,
     panel: editTaskPanel.value,
+    archived:false,
+    archived_at:null,
     due_text: editTaskDue.value.trim(),
     tag: editTaskTag.value.trim(),
     description: editTaskDesc.value.trim(),
@@ -764,6 +869,30 @@ async function saveEdit() {
   }
   upsertTaskInMemory(result.data);
   closeEditDialog();
+}
+
+async function archiveDoneTasks() {
+  const doneTasks = tasks.filter(t => t.panel === 'done' && !t.archived);
+  if (!doneTasks.length) {
+    alert('There are no done tasks to archive right now.');
+    return;
+  }
+  if (!confirm(`Archive ${doneTasks.length} done ${doneTasks.length === 1 ? 'task' : 'tasks'}?`)) return;
+  const ids = doneTasks.map(t => t.id);
+  const result = await supabase.from('tasks').update({
+    archived: true,
+    archived_at: isoNow(),
+    panel: 'done',
+    updated_at: isoNow()
+  }).in('id', ids).select();
+  if (result.error) {
+    alert('Could not archive done tasks: ' + result.error.message);
+    return;
+  }
+  (result.data || []).forEach(upsertTaskInMemory);
+  settings.showArchive = true;
+  saveSettings();
+  render();
 }
 
 function connectRealtime() {
@@ -793,6 +922,7 @@ function connectRealtime() {
 async function init() {
   notesBox.value = localStorage.getItem(NOTES_KEY) || '';
   notesBox.addEventListener('input', () => localStorage.setItem(NOTES_KEY, notesBox.value));
+  saveSettings();
 
   if (SUPABASE_ANON_KEY.includes('REPLACE_WITH')) {
     setStatus('paste your public key into the file first');
@@ -807,6 +937,7 @@ async function init() {
     updateStatus();
     connectRealtime();
     startPolling();
+    if (!localStorage.getItem(TUTORIAL_SEEN_KEY)) openTutorial();
   } catch (err) {
     console.error(err);
     setStatus('connection error');
@@ -854,7 +985,19 @@ $('deleteTaskBtn').addEventListener('click', async () => {
 });
 $('helpBtn').addEventListener('click', openHelpDialog);
 $('closeHelpBtn').addEventListener('click', closeHelpDialog);
+$('tutorialBtn').addEventListener('click', openTutorial);
+$('tutorialSkipBtn').addEventListener('click', () => closeTutorial(true));
+$('tutorialBackBtn').addEventListener('click', () => { tutorialStep = Math.max(0, tutorialStep - 1); renderTutorialStep(); });
+$('tutorialNextBtn').addEventListener('click', () => {
+  if (tutorialStep >= 4) closeTutorial(true);
+  else { tutorialStep += 1; renderTutorialStep(); }
+});
+tutorialBackdrop.addEventListener('click', e => { if (e.target === tutorialBackdrop) closeTutorial(true); });
 $('clearNotesBtn').addEventListener('click', () => { notesBox.value=''; localStorage.removeItem(NOTES_KEY); });
+$('archiveDoneBtn').addEventListener('click', archiveDoneTasks);
+$('showArchiveBtn').addEventListener('click', () => { settings.showArchive = !settings.showArchive; saveSettings(); render(); });
+$('readingFontBtn').addEventListener('click', () => { settings.readingFont = !settings.readingFont; saveSettings(); });
+$('focusModeBtn').addEventListener('click', () => { settings.focusMode = !settings.focusMode; saveSettings(); render(); });
 
 editBackdrop.addEventListener('click', e => { if (e.target === editBackdrop) closeEditDialog(); });
 helpBackdrop.addEventListener('click', e => { if (e.target === helpBackdrop) closeHelpDialog(); });
@@ -862,6 +1005,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (editBackdrop.classList.contains('open')) closeEditDialog();
     if (helpBackdrop.classList.contains('open')) closeHelpDialog();
+    if (tutorialBackdrop.classList.contains('open')) closeTutorial(true);
   }
 });
 document.addEventListener('visibilitychange', async () => {
