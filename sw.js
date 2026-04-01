@@ -1,4 +1,4 @@
-const CACHE_NAME = 'garden-board-cache-v13';
+const CACHE_NAME = 'garden-board-cache-v12';
 const ASSETS = [
   './',
   './index.html',

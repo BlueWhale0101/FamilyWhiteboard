@@ -446,22 +446,22 @@ function syncModalButtons() {
 
 function extractOwner(text,fallback) {
   let owner=fallback, working=String(text || '').trim();
-  let m=working.match(/^(wes|west|we|let'?s|skye|sky)\b[\s,:-]*/i);
+  let m=working.match(/^(wes|skye|sky)\b[\s,:-]*/i);
   if(m) {
-    owner=['wes','west','we',"let's",'lets'].includes(m[1].toLowerCase())?'Wes':'Skye';
-    working=working.replace(/^(wes|west|we|let'?s|skye|sky)\b[\s,:-]*/i,'');
+    owner=m[1].toLowerCase()==='wes'?'Wes':'Skye';
+    working=working.replace(/^(wes|skye|sky)\b[\s,:-]*/i,'');
     return {owner,text:clean(working)};
   }
-  m=working.match(/\bfor\s+(wes|west|we|let'?s|skye|sky)\b/i);
+  m=working.match(/\bfor\s+(wes|skye|sky)\b/i);
   if(m) {
-    owner=['wes','west','we',"let's",'lets'].includes(m[1].toLowerCase())?'Wes':'Skye';
-    working=working.replace(/\bfor\s+(wes|west|we|let'?s|skye|sky)\b/i,'');
+    owner=m[1].toLowerCase()==='wes'?'Wes':'Skye';
+    working=working.replace(/\bfor\s+(wes|skye|sky)\b/i,'');
     return {owner,text:clean(working)};
   }
-  m=working.match(/\bto\s+(wes|west|we|let'?s|skye|sky)\b/i);
+  m=working.match(/\bto\s+(wes|skye|sky)\b/i);
   if(m) {
-    owner=['wes','west','we',"let's",'lets'].includes(m[1].toLowerCase())?'Wes':'Skye';
-    working=working.replace(/\bto\s+(wes|west|we|let'?s|skye|sky)\b/i,'');
+    owner=m[1].toLowerCase()==='wes'?'Wes':'Skye';
+    working=working.replace(/\bto\s+(wes|skye|sky)\b/i,'');
     return {owner,text:clean(working)};
   }
   return {owner,text:clean(working)};
@@ -488,17 +488,13 @@ function normalizeVoiceText(raw) {
   text = text.replace(/\bfor\s+sky\b/i, 'for Skye');
   text = text.replace(/\bto\s+sky\b/i, 'to Skye');
 
-  // Strong owner-position fixes for Wes.
-  // Speech recognition often hears "Wes" as "West", "we", or "let's".
-  text = text.replace(/^west\b/i, 'Wes');
-  text = text.replace(/^we\b(?=[\s,:-])/i, 'Wes');
-  text = text.replace(/^let'?s\b(?=[\s,:-])/i, 'Wes');
-  text = text.replace(/\bfor\s+west\b/i, 'for Wes');
-  text = text.replace(/\bfor\s+we\b/i, 'for Wes');
-  text = text.replace(/\bfor\s+let'?s\b/i, 'for Wes');
-  text = text.replace(/\bto\s+west\b/i, 'to Wes');
-  text = text.replace(/\bto\s+we\b/i, 'to Wes');
-  text = text.replace(/\bto\s+let'?s\b/i, 'to Wes');
+  // Strong voice-only bias for Wes:
+  // if the first dictated token starts with W, normalize it to Wes.
+  text = text.replace(/^w[^\s,:'"-]*\b/i, 'Wes');
+
+  // Additional owner-position fixes for common recognizer variants.
+  text = text.replace(/\bfor\s+w[^\s,:'"-]*\b/i, 'for Wes');
+  text = text.replace(/\bto\s+w[^\s,:'"-]*\b/i, 'to Wes');
 
   return text;
 }
