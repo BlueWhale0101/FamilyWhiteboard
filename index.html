@@ -667,6 +667,13 @@ async function loadTasks(silent=false) {
   if (!silent) updateStatus();
 }
 
+
+async function forceRefreshSequence() {
+  try { await loadTasks(true); } catch (e) { console.error('Immediate refresh failed', e); }
+  setTimeout(async () => { try { await loadTasks(true); } catch (e) { console.error('500ms refresh failed', e); } }, 500);
+  setTimeout(async () => { try { await loadTasks(true); } catch (e) { console.error('2000ms refresh failed', e); } }, 2000);
+}
+
 function upsertTaskInMemory(task) {
   const normalized = (() => {
     const base = Object.assign({archived:false, archived_at:null}, task);
@@ -715,15 +722,17 @@ async function addQuickTask() {
     completed_at: null
   };
 
+  setVoiceStatus('Syncing task…');
   const result = await supabase.from('tasks').insert(row).select().single();
   if (result.error) {
     alert('Could not add task: ' + result.error.message);
     return;
   }
   upsertTaskInMemory(result.data);
-  try { await loadTasks(true); } catch (e) {}
+  try { await forceRefreshSequence(); } catch (e) {}
   quickInput.value = '';
   quickInput.focus();
+  setVoiceStatus('Task added.');
 }
 
 function setSelectedOwner(owner) {
@@ -742,7 +751,7 @@ async function moveTaskToNext(taskId) {
   if (result.error) alert('Could not move task: ' + result.error.message);
   else if (result.data && result.data[0]) {
     upsertTaskInMemory(result.data[0]);
-    try { await loadTasks(true); } catch (e) {}
+    try { await forceRefreshSequence(); } catch (e) {}
   }
   else alert('Could not move task: task update did not return a row.');
 }
@@ -759,7 +768,7 @@ async function handleCardAction(e) {
     if (result.error) alert('Could not update task: ' + result.error.message);
     else if (result.data && result.data[0]) {
       upsertTaskInMemory(result.data[0]);
-      try { await loadTasks(true); } catch (e) {}
+      try { await forceRefreshSequence(); } catch (e) {}
     }
     else alert('Could not update task: task update did not return a row.');
     return;
@@ -771,7 +780,7 @@ async function handleCardAction(e) {
     if (result.error) alert('Could not reopen task: ' + result.error.message);
     else if (result.data && result.data[0]) {
       upsertTaskInMemory(result.data[0]);
-      try { await loadTasks(true); } catch (e) {}
+      try { await forceRefreshSequence(); } catch (e) {}
     }
     else alert('Could not reopen task: task update did not return a row.');
     return;
@@ -782,7 +791,7 @@ async function handleCardAction(e) {
     if (result.error) alert('Could not restore task: ' + result.error.message);
     else if (result.data && result.data[0]) {
       upsertTaskInMemory(result.data[0]);
-      try { await loadTasks(true); } catch (e) {}
+      try { await forceRefreshSequence(); } catch (e) {}
     }
     else alert('Could not restore task: task update did not return a row.');
     return;
@@ -928,7 +937,7 @@ async function saveEdit() {
   }
   if (result.data && result.data[0]) {
     upsertTaskInMemory(result.data[0]);
-    try { await loadTasks(true); } catch (e) {}
+    try { await forceRefreshSequence(); } catch (e) {}
   } else {
     alert('Could not save task: task update did not return a row.');
     return;
@@ -955,7 +964,7 @@ async function archiveDoneTasks() {
     return;
   }
   (result.data || []).forEach(upsertTaskInMemory);
-  try { await loadTasks(true); } catch (e) {}
+  try { await forceRefreshSequence(); } catch (e) {}
   settings.showArchive = true;
   saveSettings();
   render();
@@ -971,11 +980,14 @@ function connectRealtime() {
       filter:`household_id=eq.${HOUSEHOLD_ID}`
     }, async () => {
       try {
-        await loadTasks(true);
+        await forceRefreshSequence();
         realtimeHealthy = true;
         updateStatus();
       } catch (err) {
         console.error(err);
+        setTimeout(async () => {
+          try { await loadTasks(true); } catch (e) { console.error('Realtime retry failed', e); }
+        }, 750);
       }
     })
     .subscribe(status => {
