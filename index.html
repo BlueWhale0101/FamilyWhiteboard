@@ -446,22 +446,22 @@ function syncModalButtons() {
 
 function extractOwner(text,fallback) {
   let owner=fallback, working=String(text || '').trim();
-  let m=working.match(/^(wes|skye)\b[\s,:-]*/i);
+  let m=working.match(/^(wes|skye|sky)\b[\s,:-]*/i);
   if(m) {
     owner=m[1].toLowerCase()==='wes'?'Wes':'Skye';
-    working=working.replace(/^(wes|skye)\b[\s,:-]*/i,'');
+    working=working.replace(/^(wes|skye|sky)\b[\s,:-]*/i,'');
     return {owner,text:clean(working)};
   }
-  m=working.match(/\bfor\s+(wes|skye)\b/i);
+  m=working.match(/\bfor\s+(wes|skye|sky)\b/i);
   if(m) {
     owner=m[1].toLowerCase()==='wes'?'Wes':'Skye';
-    working=working.replace(/\bfor\s+(wes|skye)\b/i,'');
+    working=working.replace(/\bfor\s+(wes|skye|sky)\b/i,'');
     return {owner,text:clean(working)};
   }
-  m=working.match(/\bto\s+(wes|skye)\b/i);
+  m=working.match(/\bto\s+(wes|skye|sky)\b/i);
   if(m) {
     owner=m[1].toLowerCase()==='wes'?'Wes':'Skye';
-    working=working.replace(/\bto\s+(wes|skye)\b/i,'');
+    working=working.replace(/\bto\s+(wes|skye|sky)\b/i,'');
     return {owner,text:clean(working)};
   }
   return {owner,text:clean(working)};
@@ -477,6 +477,15 @@ function extractDue(text) {
     }
   }
   return {due,text:clean(working)};
+}
+
+
+function normalizeVoiceText(raw) {
+  let text = String(raw || '').trim();
+  text = text.replace(/^sky\b/i, 'Skye');
+  text = text.replace(/\bfor\s+sky\b/i, 'for Skye');
+  text = text.replace(/\bto\s+sky\b/i, 'to Skye');
+  return text;
 }
 
 function parseQuickText(raw) {
@@ -664,7 +673,7 @@ function startPolling() {
 async function addQuickTask() {
   const raw = quickInput.value.trim();
   if (!raw) return;
-  const parsed = parseQuickText(raw);
+  const parsed = parseQuickText(normalizeVoiceText(raw));
   const title = clean(parsed.title);
   if (!title) return;
 
@@ -966,10 +975,10 @@ function setupVoiceRecognition() {
       else interimText += (interimText ? ' ' : '') + transcript;
     }
     if (finalText) {
-      quickInput.value = finalText;
+      quickInput.value = normalizeVoiceText(finalText);
       setVoiceStatus('Voice captured. Review if needed, then tap + to add.');
     } else if (interimText) {
-      quickInput.value = interimText;
+      quickInput.value = normalizeVoiceText(interimText);
       setVoiceStatus('Hearing: ' + interimText);
     }
   };
