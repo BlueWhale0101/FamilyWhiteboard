@@ -18,3 +18,10 @@ add column if not exists archived boolean default false;
 
 alter table tasks
 add column if not exists archived_at timestamp with time zone;
+
+
+Voice integration:
+- Tap the microphone button in quick add.
+- On supported browsers, speech will fill the quick add box.
+- Review if needed, then tap + to add.
+- iPhone/iPad Safari supports speech recognition with partial support / prefixed behavior.

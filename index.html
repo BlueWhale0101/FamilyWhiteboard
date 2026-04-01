@@ -110,6 +110,11 @@ transform:rotate(10deg);pointer-events:none}
 .mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:10px 14px;font-size:14px}
 .small-btn{font-size:14px;padding:10px 14px}
 .icon-btn{width:46px;height:46px;padding:0;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:20px}
+
+.icon-btn.mic-btn{width:48px;height:48px;font-size:22px;background:#2a3b30}
+.icon-btn.mic-btn.listening{background:rgba(214,114,114,.22);border-color:rgba(217,114,114,.34);color:#fff}
+.icon-btn.mic-btn.unsupported{opacity:.55}
+
 .icon-btn.edit-btn{width:56px;height:56px;font-size:24px}
 .small-btn.danger,.icon-btn.danger{color:#ffdede;background:rgba(217,114,114,.12);border-color:rgba(217,114,114,.2)}
 
@@ -189,8 +194,10 @@ transform:rotate(10deg);pointer-events:none}
 <div class="capture"><div class="capture-box">
 <input id="quickInput" class="capture-input" placeholder="Add task… e.g. Skye groceries tomorrow, Wes bins Tuesday morning" />
 <div class="toggle" id="ownerToggle"><button type="button" data-owner="Wes" class="active">Wes</button><button type="button" data-owner="Skye">Skye</button></div>
+<button id="micBtn" type="button" class="icon-btn mic-btn" aria-label="Voice input">🎤</button>
 <button id="addTaskBtn" type="button" class="add-btn" aria-label="Add task">+</button>
 </div>
+<div id="voiceStatus" class="status-pill" style="display:none;margin-top:10px;">Voice ready</div>
 <div class="top-utility-row">
   <button id="helpBtn" type="button" class="small-ghost">Quick add guide</button>
   <button id="tutorialBtn" type="button" class="small-ghost">Tutorial</button>
@@ -321,6 +328,7 @@ transform:rotate(10deg);pointer-events:none}
 <li>If you do not type a name, the <strong>Wes / Skye</strong> toggle decides the owner.</li>
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
+<li>Tap the <strong>mic button</strong> to dictate a task into the quick add box on supported browsers.</li>
 <li>Swipe <strong>left</strong> on a card to move it to the next basket.</li>
 <li>Swipe <strong>right</strong> on a card to open edit.</li>
 </ul>
@@ -338,7 +346,7 @@ transform:rotate(10deg);pointer-events:none}
     <div class="tutorial-step active" data-step="0"><div class="tutorial-title">Welcome to Garden Board</div><div class="tutorial-body">This is a garden whiteboard for Skye. The goal is simple: write things down fast, see what matters now, and keep the rest calm.</div></div>
     <div class="tutorial-step" data-step="1"><div class="tutorial-title">Start at the top</div><div class="tutorial-body">Use the quick add box for almost everything. Type a short phrase like “Skye groceries tomorrow” or “Wes bins Tuesday morning” and tap the plus button.</div></div>
     <div class="tutorial-step" data-step="2"><div class="tutorial-title">Check Today spotlight</div><div class="tutorial-body">If something is due today, it shows up in the spotlight section so it is easier to notice without scanning the whole board.</div></div>
-    <div class="tutorial-step" data-step="3"><div class="tutorial-title">Use baskets</div><div class="tutorial-body">Upcoming is open by default. The other baskets can stay closed until needed. Swipe left on a task to move it to the next basket, or swipe right to edit it.</div></div>
+    <div class="tutorial-step" data-step="3"><div class="tutorial-title">Use baskets</div><div class="tutorial-body">Upcoming is open by default. The other baskets can stay closed until needed. Swipe left on a task to move it to the next basket, swipe right to edit it, or tap the mic button in quick add to dictate a task.</div></div>
     <div class="tutorial-step" data-step="4"><div class="tutorial-title">Use archive for memory</div><div class="tutorial-body">Archive done tasks when you want a clean board, then show archived later to review what you did for projects like parties, holidays, or travel prep.</div></div>
     <div class="tutorial-actions"><button id="tutorialSkipBtn" type="button" class="small-btn">Skip</button><div class="actions-right"><button id="tutorialBackBtn" type="button" class="small-btn">Back</button><button id="tutorialNextBtn" type="button" class="small-btn">Next</button></div></div>
   </div>
@@ -351,6 +359,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_Ew7XkaYZV2w9vzFndOAq3w_ND4G6JQM";
 const HOUSEHOLD_ID = "ca0ebdfc-f533-46d5-b8bb-1c6f6d0b6248";
 const NOTES_KEY = "garden-board-notes-sync-v9";
 const PANEL_STATE_KEY = "garden-board-panel-state-v9";
+const VOICE_PREF_KEY = "garden-board-voice-pref-v11";
 const TUTORIAL_SEEN_KEY = "garden-board-tutorial-seen-v9";
 const SETTINGS_KEY = "garden-board-settings-v9";
 
@@ -388,6 +397,9 @@ let filters = { search:'', tag:'', time:'' };
 let filterPanelOpen = false;
 let tutorialStep = 0;
 let settings = loadSettings();
+let recognition = null;
+let isListening = false;
+let voiceSupported = false;
 
 function loadSettings() {
   try {
@@ -532,6 +544,7 @@ function render() {
   renderFilterSummary();
   syncFilterChips();
   saveSettings();
+  setupVoiceRecognition();
 
   panelGrid.innerHTML='';
   visiblePanels().forEach(panel => {
@@ -914,6 +927,81 @@ function connectRealtime() {
     });
 }
 
+
+function setVoiceStatus(message, show=true) {
+  const box = $('voiceStatus');
+  if (!box) return;
+  box.textContent = message;
+  box.style.display = show ? 'inline-flex' : 'none';
+}
+function setupVoiceRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micBtn = $('micBtn');
+  if (!micBtn) return;
+  if (!SR) {
+    voiceSupported = false;
+    micBtn.classList.add('unsupported');
+    micBtn.title = 'Voice input is not available in this browser';
+    setVoiceStatus('Voice input not available on this browser', false);
+    return;
+  }
+  voiceSupported = true;
+  recognition = new SR();
+  recognition.lang = 'en-AU';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    setVoiceStatus('Listening… say a task like “Skye groceries tomorrow”');
+  };
+  recognition.onresult = (event) => {
+    let finalText = '';
+    let interimText = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript.trim();
+      if (event.results[i].isFinal) finalText += (finalText ? ' ' : '') + transcript;
+      else interimText += (interimText ? ' ' : '') + transcript;
+    }
+    if (finalText) {
+      quickInput.value = finalText;
+      setVoiceStatus('Voice captured. Review if needed, then tap + to add.');
+    } else if (interimText) {
+      quickInput.value = interimText;
+      setVoiceStatus('Hearing: ' + interimText);
+    }
+  };
+  recognition.onerror = (event) => {
+    let msg = 'Voice error';
+    if (event.error === 'not-allowed') msg = 'Microphone permission was blocked';
+    else if (event.error === 'no-speech') msg = 'No speech heard';
+    else if (event.error === 'audio-capture') msg = 'Microphone not available';
+    else if (event.error) msg = 'Voice error: ' + event.error;
+    setVoiceStatus(msg);
+  };
+  recognition.onend = () => {
+    isListening = false;
+    micBtn.classList.remove('listening');
+  };
+}
+function toggleVoiceInput() {
+  if (!voiceSupported || !recognition) {
+    setVoiceStatus('Voice input is not available on this browser');
+    return;
+  }
+  if (isListening) {
+    recognition.stop();
+    return;
+  }
+  try {
+    recognition.start();
+  } catch (err) {
+    setVoiceStatus('Voice could not start. Try again.');
+  }
+}
+
 async function init() {
   notesBox.value = localStorage.getItem(NOTES_KEY) || '';
   notesBox.addEventListener('input', () => localStorage.setItem(NOTES_KEY, notesBox.value));
@@ -993,6 +1081,7 @@ $('archiveDoneBtn').addEventListener('click', archiveDoneTasks);
 $('showArchiveBtn').addEventListener('click', () => { settings.showArchive = !settings.showArchive; saveSettings(); render(); });
 $('readingFontBtn').addEventListener('click', () => { settings.readingFont = !settings.readingFont; saveSettings(); });
 $('focusModeBtn').addEventListener('click', () => { settings.focusMode = !settings.focusMode; saveSettings(); render(); });
+$('micBtn').addEventListener('click', toggleVoiceInput);
 
 editBackdrop.addEventListener('click', e => { if (e.target === editBackdrop) closeEditDialog(); });
 helpBackdrop.addEventListener('click', e => { if (e.target === helpBackdrop) closeHelpDialog(); });

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'garden-board-v11-pwa-cache';
+const CACHE_NAME = 'garden-board-cache-v11';
 const ASSETS = [
   './',
   './index.html',
