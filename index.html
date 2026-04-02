@@ -350,7 +350,7 @@ border-radius: 999px;
 <li>If you do not type a name, the <strong>Wes / Skye</strong> toggle decides the owner.</li>
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
-<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. An undo button appears for a few seconds.</li>
+<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li>
 <li>Swipe <strong>left</strong> on a card to move it to the next basket.</li>
 <li>Swipe <strong>right</strong> on a card to open edit.</li>
 </ul>
@@ -509,6 +509,19 @@ function extractDue(text) {
 function normalizeVoiceText(raw) {
   let text = String(raw || '').trim();
 
+  // Normalize punctuation / whitespace from dictation
+  text = text.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+  text = text.replace(/\s+/g, ' ').trim();
+
+  // Remove common voice filler at the beginning
+  text = text.replace(/^(please\s+)?(can you|could you|would you)\s+/i, '');
+  text = text.replace(/^(please\s+)?(remind me to|remember to|don't forget to|do not forget to)\s+/i, '');
+  text = text.replace(/^(please\s+)?(i need to|we need to|need to)\s+/i, '');
+  text = text.replace(/^(please\s+)?(add|create|make|put)\s+(a\s+)?task\s+(for\s+)?/i, '');
+  text = text.replace(/^(please\s+)?add\s+/i, '');
+  text = text.replace(/^(please\s+)?put\s+/i, '');
+  text = text.replace(/^(please\s+)?make\s+/i, '');
+
   // Strong owner-position fixes for Skye
   text = text.replace(/^sky\b/i, 'Skye');
   text = text.replace(/\bfor\s+sky\b/i, 'for Skye');
@@ -522,14 +535,39 @@ function normalizeVoiceText(raw) {
   text = text.replace(/\bfor\s+w[^\s,:'"-]*\b/i, 'for Wes');
   text = text.replace(/\bto\s+w[^\s,:'"-]*\b/i, 'to Wes');
 
+  // Light cleanup of leading helper verbs after filler stripping
+  text = text.replace(/^(to\s+)/i, '');
+  text = text.replace(/^(please\s+)/i, '');
+
+  // Remove trailing polite fillers
+  text = text.replace(/\s+(please|thanks|thank you)$/i, '');
+
+  // Final trim / whitespace cleanup
+  text = text.replace(/\s+/g, ' ').trim();
   return text;
+}
+
+
+function cleanupTaskTitle(text) {
+  let t = String(text || '').trim();
+
+  // Strip narrow leading helper phrases after owner/due extraction
+  t = t.replace(/^(need to|needs to|have to|has to)\s+/i, '');
+
+  // Strip dangling prepositions often left behind after due extraction
+  t = t.replace(/\s+(on|by)$/i, '');
+
+  // Final cleanup
+  t = t.replace(/\s+/g, ' ').trim();
+  return t;
 }
 
 function parseQuickText(raw) {
   let working=String(raw || '').trim();
   const o=extractOwner(working, selectedOwner); working=o.text;
   const d=extractDue(working); working=d.text;
-  if(!working) working=String(raw || '').trim();
+  working = cleanupTaskTitle(working);
+  if(!working) working=cleanupTaskTitle(String(raw || '').trim());
   return {title:working,owner:o.owner,panel:d.due ? 'upcoming' : 'backlog',due:d.due,tag:'',description:''};
 }
 
@@ -740,7 +778,7 @@ async function addQuickTask(options = {}) {
   const source = options.source || 'manual';
   if (!raw) return;
   const parsed = parseQuickText(normalizeVoiceText(raw));
-  const title = clean(parsed.title);
+  const title = cleanupTaskTitle(clean(parsed.title));
   if (!title) return;
 
   const row = {
@@ -1303,7 +1341,7 @@ border: 1px solid rgba(255,255,255,.08);
 padding: 5px 8px;
 border-radius: 999px;
 backdrop-filter: blur(4px);
-">v25</div>
+">v27</div>
 
 </body>
 </html>
