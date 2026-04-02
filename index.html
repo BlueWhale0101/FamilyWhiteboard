@@ -323,13 +323,34 @@ transform:rotate(10deg);pointer-events:none}
   </div>
 </div></div>
 
+
+<div id="undoToast" style="
+position: fixed;
+left: 50%;
+bottom: 54px;
+transform: translateX(-50%);
+display: none;
+align-items: center;
+gap: 10px;
+z-index: 9998;
+background: rgba(19,32,25,.96);
+border: 1px solid rgba(83,118,95,.72);
+box-shadow: 0 14px 34px rgba(0,0,0,.34);
+padding: 10px 12px;
+border-radius: 999px;
+">
+  <span id="undoToastText" style="font-size:14px;color:#eef7ef;">Task added</span>
+  <button id="undoVoiceBtn" type="button" class="small-btn" style="padding:8px 12px;">Undo</button>
+</div>
+
+
 <div id="helpDialogBackdrop" class="dialog-backdrop" aria-hidden="true"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><h3 id="helpTitle">Quick Add Guide</h3>
 <ul class="help-list">
 <li>Type a task and tap <strong>+</strong> or press Enter.</li>
 <li>If you do not type a name, the <strong>Wes / Skye</strong> toggle decides the owner.</li>
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
-<li>Tap the <strong>mic button</strong> to dictate a task into the quick add box on supported browsers.</li>
+<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. An undo button appears for a few seconds.</li>
 <li>Swipe <strong>left</strong> on a card to move it to the next basket.</li>
 <li>Swipe <strong>right</strong> on a card to open edit.</li>
 </ul>
@@ -400,6 +421,8 @@ let tutorialStep = 0;
 let settings = loadSettings();
 let voiceTimeout = null;
 const VOICE_TIMEOUT_MS = 8000;
+let lastVoiceAddedTaskId = null;
+let undoToastTimer = null;
 let recognition = null;
 let isListening = false;
 let voiceSupported = false;
@@ -674,6 +697,19 @@ async function forceRefreshSequence() {
   setTimeout(async () => { try { await loadTasks(true); } catch (e) { console.error('2000ms refresh failed', e); } }, 2000);
 }
 
+
+function getNextPanel(panel) {
+  switch(panel) {
+    case 'backlog': return 'upcoming';
+    case 'upcoming': return 'inMotion';
+    case 'inMotion': return 'done';
+    case 'waiting': return 'inMotion';
+    case 'done': return 'archived';
+    case 'archived': return 'archived';
+    default: return 'upcoming';
+  }
+}
+
 function upsertTaskInMemory(task) {
   const normalized = (() => {
     const base = Object.assign({archived:false, archived_at:null}, task);
@@ -700,8 +736,9 @@ function startPolling() {
   }, 3000);
 }
 
-async function addQuickTask() {
+async function addQuickTask(options = {}) {
   const raw = quickInput.value.trim();
+  const source = options.source || 'manual';
   if (!raw) return;
   const parsed = parseQuickText(normalizeVoiceText(raw));
   const title = clean(parsed.title);
@@ -732,7 +769,8 @@ async function addQuickTask() {
   try { await forceRefreshSequence(); } catch (e) {}
   quickInput.value = '';
   quickInput.focus();
-  setVoiceStatus('Task added.');
+  setVoiceStatus(source === 'voice' ? 'Voice task added.' : 'Task added.');
+  if (source === 'voice' && result.data && result.data.id) showUndoToast(result.data.id, result.data.title);
 }
 
 function setSelectedOwner(owner) {
@@ -998,6 +1036,37 @@ function connectRealtime() {
 }
 
 
+
+function showUndoToast(taskId, title) {
+  lastVoiceAddedTaskId = taskId;
+  const toast = $('undoToast');
+  const text = $('undoToastText');
+  if (!toast || !text) return;
+  text.textContent = 'Added: ' + (title || 'task');
+  toast.style.display = 'inline-flex';
+  if (undoToastTimer) clearTimeout(undoToastTimer);
+  undoToastTimer = setTimeout(() => {
+    toast.style.display = 'none';
+    lastVoiceAddedTaskId = null;
+  }, 5000);
+}
+
+async function undoLastVoiceAdd() {
+  if (!lastVoiceAddedTaskId) return;
+  const taskId = lastVoiceAddedTaskId;
+  lastVoiceAddedTaskId = null;
+  const toast = $('undoToast');
+  if (toast) toast.style.display = 'none';
+  const result = await supabase.from('tasks').delete().eq('id', taskId);
+  if (result.error) {
+    alert('Could not undo task: ' + result.error.message);
+    return;
+  }
+  removeTaskInMemory(taskId);
+  try { await forceRefreshSequence(); } catch (e) {}
+  setVoiceStatus('Voice task removed.');
+}
+
 function setVoiceStatus(message, show=true) {
   const box = $('voiceStatus');
   if (!box) return;
@@ -1038,9 +1107,11 @@ function setupVoiceRecognition() {
       else interimText += (interimText ? ' ' : '') + transcript;
     }
     if (finalText) {
-      quickInput.value = normalizeVoiceText(finalText);
-      setVoiceStatus('Voice captured. Tap + to add, or edit the text first if needed.');
+      const normalized = normalizeVoiceText(finalText);
+      quickInput.value = normalized;
+      setVoiceStatus('Voice captured. Adding task…');
       try { recognition.stop(); } catch(e) {}
+      setTimeout(() => { addQuickTask({ source: 'voice' }).catch(err => console.error('Voice add failed', err)); }, 0);
     } else if (interimText) {
       quickInput.value = normalizeVoiceText(interimText);
       setVoiceStatus('Hearing: ' + interimText);
@@ -1062,7 +1133,7 @@ function setupVoiceRecognition() {
       clearTimeout(voiceTimeout);
       voiceTimeout = null;
     }
-    if (!quickInput.value.trim()) {
+    if (!quickInput.value.trim() && !lastVoiceAddedTaskId) {
       setVoiceStatus('Voice stopped. Try again if nothing was captured.');
     }
   };
@@ -1162,6 +1233,7 @@ $('archiveDoneBtn').addEventListener('click', archiveDoneTasks);
 $('showArchiveBtn').addEventListener('click', () => { settings.showArchive = !settings.showArchive; saveSettings(); render(); });
 $('readingFontBtn').addEventListener('click', () => { settings.readingFont = !settings.readingFont; saveSettings(); });
 $('focusModeBtn').addEventListener('click', () => { settings.focusMode = !settings.focusMode; saveSettings(); render(); });
+$('undoVoiceBtn').addEventListener('click', undoLastVoiceAdd);
 $('micBtn').addEventListener('click', toggleVoiceInput);
 
 editBackdrop.addEventListener('click', e => { if (e.target === editBackdrop) closeEditDialog(); });
@@ -1219,15 +1291,20 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
+
 <div id="versionBadge" style="
 position: fixed;
 bottom: 10px;
 right: 12px;
 font-size: 12px;
-opacity: 0.6;
+opacity: 0.68;
 z-index: 9999;
-">
-v22
-</div>
+background: rgba(8,16,11,.65);
+border: 1px solid rgba(255,255,255,.08);
+padding: 5px 8px;
+border-radius: 999px;
+backdrop-filter: blur(4px);
+">v24</div>
+
 </body>
 </html>
