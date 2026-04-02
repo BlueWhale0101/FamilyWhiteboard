@@ -1,27 +1,20 @@
 {
   "name": "Garden Board",
-  "short_name": "Garden Board",
-  "start_url": "./index.html",
+  "short_name": "Garden",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#0d1711",
-  "theme_color": "#0d1711",
-  "description": "A garden whiteboard for Skye",
+  "background_color": "#08100b",
+  "theme_color": "#08100b",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "icons/icon_192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "icons/icon_512.png",
       "sizes": "512x512",
       "type": "image/png"
-    },
-    {
-      "src": "icons/maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }
