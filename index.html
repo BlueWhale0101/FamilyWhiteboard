@@ -284,11 +284,11 @@ transform:rotate(10deg);pointer-events:none}
         <div class="segmented" id="modalPanelButtons">
           <button type="button" class="seg-btn" data-panel-btn="upcoming">Upcoming</button>
           <button type="button" class="seg-btn" data-panel-btn="inMotion">In Motion</button>
-          <button type="button" class="seg-btn" data-panel-btn="waiting">Waiting</button>
-          <button type="button" class="seg-btn" data-panel-btn="backlog">Backlog</button>
+          
+          <button type="button" class="seg-btn" data-panel-btn="backlog">Someday/Someday/Backlog</button>
           <button type="button" class="seg-btn" data-panel-btn="done">Done</button>
         </div>
-        <div class="field" style="margin-top:10px;"><select id="editTaskPanel"><option value="upcoming">Upcoming</option><option value="inMotion">In Motion</option><option value="waiting">Waiting / Someday</option><option value="backlog">Backlog</option><option value="done">Done</option></select></div>
+        <div class="field" style="margin-top:10px;"><select id="editTaskPanel"><option value="upcoming">Upcoming</option><option value="inMotion">In Motion</option><option value="backlog">Someday/Backlog</option><option value="done">Done</option></select></div>
       </div>
     </div>
     <div class="section-card">
@@ -377,7 +377,7 @@ border-radius: 999px;
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://pssgbrtyhwoumhiynwlj.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_Ew7XkaYZV2w9vzFndOAq3w_ND4G6JQM";
+const SUPABASE_ANON_KEY = "REPLACE_WITH_YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY";
 const HOUSEHOLD_ID = "ca0ebdfc-f533-46d5-b8bb-1c6f6d0b6248";
 const NOTES_KEY = "garden-board-notes-sync-v9";
 const PANEL_STATE_KEY = "garden-board-panel-state-v9";
@@ -386,7 +386,7 @@ const TUTORIAL_SEEN_KEY = "garden-board-tutorial-seen-v9";
 const SETTINGS_KEY = "garden-board-settings-v9";
 
 (() => {
-const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'waiting',title:'Waiting / Someday'},{key:'backlog',title:'Backlog'},{key:'done',title:'Done'},{key:'archived',title:'Archived'}];
+const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'backlog',title:'Someday/Backlog'},{key:'done',title:'Done'},{key:'archived',title:'Archived'}];
 const DEFAULT_PANEL_STATE = {upcoming:true,inMotion:false,waiting:false,backlog:false,done:false,archived:false};
 const DUE_PATTERNS=[
 [/\bday after tomorrow\b/i,'Day after tomorrow'],
@@ -703,7 +703,6 @@ function getNextPanel(panel) {
     case 'backlog': return 'upcoming';
     case 'upcoming': return 'inMotion';
     case 'inMotion': return 'done';
-    case 'waiting': return 'inMotion';
     case 'done': return 'archived';
     case 'archived': return 'archived';
     default: return 'upcoming';
@@ -1304,7 +1303,7 @@ border: 1px solid rgba(255,255,255,.08);
 padding: 5px 8px;
 border-radius: 999px;
 backdrop-filter: blur(4px);
-">v24</div>
+">v25</div>
 
 </body>
 </html>
