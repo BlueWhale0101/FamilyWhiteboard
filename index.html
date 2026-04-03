@@ -494,7 +494,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v35.1 • Visible version badge should say v35.1`;
+  if (meta) meta.textContent = `Build: v36 • Visible version badge should say v36`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -938,14 +938,15 @@ function renderCard(task) {
     quick = `<div class="quick"><button class="mini-btn" data-action="done" data-id="${task.id}">Done</button><button class="mini-btn" data-action="next-panel" data-id="${task.id}">Move</button><button class="icon-btn edit-btn" data-action="edit" data-id="${task.id}" aria-label="Edit task">✎</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
   }
   const hint = task.panel === 'archived' ? '' : '<div class="swipe-hint">← next basket • → edit</div>';
-  return `
+  const tagPill = task.tag ? `<span class='meta-pill'>#${esc(task.tag)}</span>` : '';
+return `
     <article class="card ${todayClass} ${cardOwnerClass}" data-id="${task.id}">
       <div class="task-row">
         <h3 class="title">${esc(task.title)}</h3>
         <div class="${ownerClass}">${esc(task.owner || '')}</div>
       </div>
       <div class="meta">
-        <div class="${dueClass}">${dueText}</div>
+        <div class="${dueClass}">${dueText} ${tagPill}</div>
         ${tagText}
       </div>
       ${descText}
@@ -1629,7 +1630,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v35.1</div>
+    <div class="dev-meta" id="devMeta">Build: v36</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1658,7 +1659,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v35.1</div>
+">v36</div>
 
 </body>
 </html>
