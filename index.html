@@ -105,6 +105,7 @@ transform:rotate(10deg);pointer-events:none}
 .meta{padding-left:8px;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
 .meta-pill{background:var(--card-2);border:1px solid var(--line);color:#d8e5da;font-size:13px;padding:7px 11px;border-radius:999px}
 .meta-pill.today-pill{background:rgba(215,241,164,.16);border-color:rgba(215,241,164,.24);color:#f2fbdb;font-weight:700}
+.meta-pill.overdue-pill{background:rgba(217,114,114,.16);border-color:rgba(217,114,114,.28);color:#ffdede;font-weight:700}
 .desc{padding-left:8px;margin:10px 0 0;color:#ecf3ed;font-size:15px;line-height:1.55;white-space:pre-wrap}
 .quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:10px 14px;font-size:14px}
@@ -171,6 +172,21 @@ transform:rotate(10deg);pointer-events:none}
   .today-header{align-items:flex-start;flex-direction:column}
   .tutorial-actions{flex-direction:column-reverse}
 }
+
+.dev-console{
+  position:fixed;left:12px;right:12px;bottom:52px;z-index:9997;
+  background:rgba(19,32,25,.97);border:1px solid rgba(83,118,95,.72);
+  box-shadow:var(--shadow);border-radius:20px;padding:14px;display:none;
+  max-width:860px;margin:0 auto;
+}
+.dev-console.open{display:block}
+.dev-console h3{margin:0 0 10px;font-size:18px}
+.dev-grid{display:grid;gap:12px}
+.dev-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dev-console input{background:rgba(23,38,29,.95);border:1px solid rgba(83,118,95,.72);color:var(--text);border-radius:12px;padding:10px 12px;outline:none}
+.dev-meta{font-size:13px;color:var(--muted);line-height:1.5}
+.dev-link{font-size:12px;color:#d7e5d8;opacity:.9}
+
 @media (min-width:700px){
   .page{padding:18px 16px 42px}
   .panel-grid{grid-template-columns:1fr 1fr}
@@ -179,7 +195,7 @@ transform:rotate(10deg);pointer-events:none}
 </style>
 
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/icon_192.png">
+<link rel="apple-touch-icon" href="./icons/icon_512.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon_192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon_512.png">
 <meta name="theme-color" content="#0d1711">
@@ -209,7 +225,7 @@ transform:rotate(10deg);pointer-events:none}
 
 <section class="today-spotlight" id="todaySpotlight">
   <div class="today-header">
-    <div><h2 class="today-title">Today spotlight</h2><div class="today-sub">The clearest place to look first.</div></div>
+    <div><h2 class="today-title">Today spotlight</h2><div class="today-sub">The clearest place to look first. Due labels update as days roll forward.</div></div>
     <div class="count" id="todayCount">0 tasks</div>
   </div>
   <div id="todayList" class="today-list"></div>
@@ -327,7 +343,7 @@ transform:rotate(10deg);pointer-events:none}
 <div id="undoToast" style="
 position: fixed;
 left: 50%;
-bottom: 54px;
+bottom: 58px;
 transform: translateX(-50%);
 display: none;
 align-items: center;
@@ -336,11 +352,11 @@ z-index: 9998;
 background: rgba(19,32,25,.96);
 border: 1px solid rgba(83,118,95,.72);
 box-shadow: 0 14px 34px rgba(0,0,0,.34);
-padding: 10px 12px;
+padding: 14px 16px;
 border-radius: 999px;
 ">
-  <span id="undoToastText" style="font-size:14px;color:#eef7ef;">Task added</span>
-  <button id="undoVoiceBtn" type="button" class="small-btn" style="padding:8px 12px;">Undo</button>
+  <span id="undoToastText" style="font-size:17px;color:#eef7ef;font-weight:700;">Task added</span>
+  <button id="undoVoiceBtn" type="button" class="small-btn" style="padding:10px 14px;font-size:15px;">Undo</button>
 </div>
 
 
@@ -384,6 +400,7 @@ const PANEL_STATE_KEY = "garden-board-panel-state-v9";
 const VOICE_PREF_KEY = "garden-board-voice-pref-v11";
 const TUTORIAL_SEEN_KEY = "garden-board-tutorial-seen-v9";
 const SETTINGS_KEY = "garden-board-settings-v9";
+const DEV_TEST_DATE_KEY = "garden-board-dev-test-date-v31";
 
 (() => {
 const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'backlog',title:'Someday/Backlog'},{key:'done',title:'Done'},{key:'archived',title:'Archived'}];
@@ -426,19 +443,7 @@ let undoToastTimer = null;
 let recognition = null;
 let isListening = false;
 let voiceSupported = false;
-
-function recordDevError(message) {
-  const msg = String(message || 'Unknown error');
-  devErrors.unshift({ time: new Date().toISOString(), message: msg });
-  while (devErrors.length > 8) devErrors.pop();
-  try { refreshDevConsole(); } catch (e) {}
-}
-function recordTrace(message) {
-  const msg = String(message || 'trace');
-  devTrace.unshift({ time: new Date().toISOString(), message: msg });
-  while (devTrace.length > 20) devTrace.pop();
-  try { refreshDevConsole(); } catch (e) {}
-}
+let devPressTimer = null;
 
 function loadSettings() {
   try {
@@ -473,6 +478,166 @@ function updateStatus() {
 function esc(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 function clean(text){ return String(text || '').replace(/\s{2,}/g,' ').replace(/\s+,/g,',').replace(/\s+\./g,'.').replace(/^[,\-–:\s]+/,'').replace(/[,\-–:\s]+$/,'').trim(); }
 function isoNow(){ return new Date().toISOString(); }
+
+const devTrace = [];
+const devErrors = [];
+
+function recordTrace(msg){
+  devTrace.unshift(msg);
+  if(devTrace.length>20) devTrace.pop();
+  const el=document.getElementById('devTrace');
+  if(el) el.innerHTML=devTrace.join('<br>');
+}
+
+function recordError(msg){
+  devErrors.unshift(msg);
+  if(devErrors.length>10) devErrors.pop();
+  const el=document.getElementById('devErrors');
+  if(el) el.innerHTML=devErrors.join('<br>');
+}
+
+function now() {
+  const override = localStorage.getItem(DEV_TEST_DATE_KEY);
+  if (override) {
+    const d = new Date(override + 'T12:00:00');
+    if (!isNaN(d.getTime())) return d;
+  }
+  return new Date();
+}
+function devDateValue() {
+  return localStorage.getItem(DEV_TEST_DATE_KEY) || '';
+}
+function refreshDevConsole() {
+  const meta = $('devMeta');
+  const dateStatus = $('devDateStatus');
+  const taskStats = $('devTaskStats');
+  const input = $('devDateInput');
+  if (meta) meta.textContent = `Build: v39 • Visible version badge should say v39`;
+  if (input) input.value = devDateValue();
+  const n = now();
+  const today = new Date(n); today.setHours(0,0,0,0);
+  if (dateStatus) {
+    dateStatus.textContent = devDateValue()
+      ? `Using test date: ${devDateValue()}`
+      : `Using real device date: ${today.toISOString().slice(0,10)}`;
+  }
+  if (taskStats) {
+    const todayCount = tasks.filter(t => isTodayTask(t)).length;
+    const overdueCount = tasks.filter(t => resolveDueInfo(t.due_text, t).isOverdue).length;
+    taskStats.textContent = `Tasks loaded: ${tasks.length} • Today: ${todayCount} • Overdue: ${overdueCount}`;
+  }
+  const errorsBox = $('devErrors');
+  if (errorsBox) {
+    errorsBox.innerHTML = devErrors.length
+      ? devErrors.map(e => `<div style="margin-bottom:6px;"><strong>${esc(e.time.slice(11,19))}</strong> — ${esc(e.message)}</div>`).join('')
+      : 'No captured errors.';
+  }
+}
+function toggleDevConsole() {
+  const panel = $('devConsole');
+  if (!panel) return;
+  panel.classList.toggle('open');
+  panel.setAttribute('aria-hidden', panel.classList.contains('open') ? 'false' : 'true');
+  refreshDevConsole();
+}
+const devErrors = [];
+function recordDevError(message) {
+  const msg = String(message || 'Unknown error');
+  devErrors.unshift({ time: new Date().toISOString(), message: msg });
+  while (devErrors.length > 8) devErrors.pop();
+  refreshDevConsole();
+}
+function setDevTestDate(value) {
+  if (value) localStorage.setItem(DEV_TEST_DATE_KEY, value);
+  else localStorage.removeItem(DEV_TEST_DATE_KEY);
+  refreshDevConsole();
+  render();
+}
+
+function startOfToday() {
+  const d = now();
+  d.setHours(0,0,0,0);
+  return d;
+}
+function dayDiff(a, b) {
+  const ms = 24 * 60 * 60 * 1000;
+  return Math.round((a.getTime() - b.getTime()) / ms);
+}
+function nextWeekdayDate(targetDay) {
+  const today = startOfToday();
+  const current = today.getDay();
+  let delta = (targetDay - current + 7) % 7;
+  if (delta === 0) return today;
+  const out = new Date(today);
+  out.setDate(today.getDate() + delta);
+  return out;
+}
+function dueInfo(task) {
+  const raw = String((task && task.due_text) || '').trim();
+  const lower = raw.toLowerCase();
+  const today = startOfToday();
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+
+  const weekdays = {
+    sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+    thursday: 4, friday: 5, saturday: 6
+  };
+
+  if (!raw) return { label: 'No due date', isToday: false, isOverdue: false, resolvedDate: null };
+
+  if (lower === 'today' || lower === 'this morning' || lower === 'this afternoon' || lower === 'tonight') {
+    return { label: 'Today', isToday: true, isOverdue: false, resolvedDate: today };
+  }
+
+  if (lower === 'tomorrow' || lower === 'tomorrow morning' || lower === 'tomorrow afternoon' || lower === 'tomorrow night') {
+    const created = task && task.created_at ? new Date(task.created_at) : null;
+    if (created) {
+      const createdDay = new Date(created); createdDay.setHours(0,0,0,0);
+      const diff = dayDiff(today, createdDay);
+      if (diff <= 0) return { label: raw, isToday: false, isOverdue: false, resolvedDate: tomorrow };
+      if (diff === 1) return { label: 'Today', isToday: true, isOverdue: false, resolvedDate: today };
+      return { label: 'Overdue', isToday: false, isOverdue: true, resolvedDate: tomorrow };
+    }
+    return { label: raw, isToday: false, isOverdue: false, resolvedDate: tomorrow };
+  }
+
+  if (lower in weekdays) {
+    const target = weekdays[lower];
+    const created = task && task.created_at ? new Date(task.created_at) : null;
+    const createdDay = created ? new Date(created) : today;
+    createdDay.setHours(0,0,0,0);
+    const baseCurrent = createdDay.getDay();
+    let delta = (target - baseCurrent + 7) % 7;
+    const dueDate = new Date(createdDay);
+    dueDate.setDate(createdDay.getDate() + delta);
+
+    const diff = dayDiff(today, dueDate);
+    if (diff < 0) return { label: raw, isToday: false, isOverdue: false, resolvedDate: dueDate };
+    if (diff === 0) return { label: 'Today', isToday: true, isOverdue: false, resolvedDate: dueDate };
+    return { label: 'Overdue', isToday: false, isOverdue: true, resolvedDate: dueDate };
+  }
+
+  if (lower === 'this week') {
+    const dow = today.getDay();
+    const endOfWeek = new Date(today); endOfWeek.setDate(today.getDate() + (7 - dow));
+    return { label: 'This week', isToday: false, isOverdue: false, resolvedDate: endOfWeek };
+  }
+
+  if (lower === 'next week') {
+    const created = task && task.created_at ? new Date(task.created_at) : null;
+    if (created) {
+      const createdDay = new Date(created); createdDay.setHours(0,0,0,0);
+      const daysSince = dayDiff(today, createdDay);
+      if (daysSince < 7) return { label: 'Next week', isToday: false, isOverdue: false, resolvedDate: null };
+      if (daysSince < 14) return { label: 'This week', isToday: false, isOverdue: false, resolvedDate: null };
+      return { label: 'Overdue', isToday: false, isOverdue: true, resolvedDate: null };
+    }
+    return { label: raw, isToday: false, isOverdue: false, resolvedDate: null };
+  }
+
+  return { label: raw, isToday: false, isOverdue: false, resolvedDate: null };
+}
+
 
 function syncModalButtons() {
   modalOwnerChips.querySelectorAll('[data-owner-chip]').forEach(btn => {
@@ -585,15 +750,109 @@ function parseQuickText(raw) {
 }
 
 function matchesFilters(task) {
-  const hay = [task.title, task.owner, task.tag, task.due_text, task.description].join(' ').toLowerCase();
+  const hay = [task.title, task.owner, task.tag, task.due_text, getDisplayDueText(task), task.description].join(' ').toLowerCase();
   if (filters.search && !hay.includes(filters.search.toLowerCase())) return false;
   if (filters.tag && String(task.tag || '').toLowerCase() !== filters.tag.toLowerCase()) return false;
   if (filters.time && !String(task.due_text || '').toLowerCase().includes(filters.time.toLowerCase())) return false;
   return true;
 }
 
+
+function startOfDay(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function sameDay(a, b) {
+  return startOfDay(a).getTime() === startOfDay(b).getTime();
+}
+
+function endOfWeek(date) {
+  const d = startOfDay(date);
+  const day = d.getDay(); // 0=Sun
+  d.setDate(d.getDate() + (6 - day));
+  return d;
+}
+
+function resolveDueInfo(dueText, task) {
+  const raw = String(dueText || '').trim();
+  const due = raw.toLowerCase();
+  const today = startOfDay(now());
+
+  if (!raw) {
+    return { raw, resolvedDate: null, display: 'No due date', isToday: false, isTomorrow: false, isOverdue: false, bucket: 'none' };
+  }
+
+  const createdBase = task && task.created_at ? startOfDay(new Date(task.created_at)) : today;
+  const weekdayMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+  const weekdayMatch = due.match(/(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/);
+
+  let resolvedDate = null;
+  let bucket = 'text';
+
+  if (due.includes('day after tomorrow')) {
+    resolvedDate = addDays(createdBase, 2); bucket = 'relative';
+  } else if (due.includes('tomorrow')) {
+    resolvedDate = addDays(createdBase, 1); bucket = 'relative';
+  } else if (due.includes('today') || due.includes('tonight') || due.includes('this morning') || due.includes('this afternoon')) {
+    resolvedDate = createdBase; bucket = 'relative';
+  } else if (due.includes('this weekend')) {
+    resolvedDate = addDays(createdBase, (6 - createdBase.getDay()) % 7); bucket = 'thisWeekend';
+  } else if (due.includes('next weekend')) {
+    resolvedDate = addDays(createdBase, ((6 - createdBase.getDay()) % 7) + 7); bucket = 'nextWeekend';
+  } else if (due.includes('this week')) {
+    resolvedDate = endOfWeek(createdBase); bucket = 'thisWeek';
+  } else if (due.includes('next week')) {
+    resolvedDate = addDays(endOfWeek(createdBase), 7); bucket = 'nextWeek';
+  } else if (weekdayMatch) {
+    const targetDow = weekdayMap[weekdayMatch[1]];
+    const createdDow = createdBase.getDay();
+    const delta = (targetDow - createdDow + 7) % 7;
+    resolvedDate = addDays(createdBase, delta);
+    bucket = 'weekday';
+  }
+
+  const isToday = resolvedDate ? sameDay(resolvedDate, today) : false;
+  const isTomorrow = resolvedDate ? sameDay(resolvedDate, addDays(today, 1)) : false;
+
+  let display = raw;
+  let isOverdue = false;
+
+  if (resolvedDate && startOfDay(resolvedDate) < today && !isToday) {
+    isOverdue = true;
+    display = 'Overdue';
+  } else if (isToday) {
+    if (due.includes('morning')) display = 'Today morning';
+    else if (due.includes('afternoon')) display = 'Today afternoon';
+    else if (due.includes('night') || due.includes('tonight')) display = 'Tonight';
+    else display = 'Today';
+  } else if (isTomorrow) {
+    if (due.includes('morning')) display = 'Tomorrow morning';
+    else if (due.includes('afternoon')) display = 'Tomorrow afternoon';
+    else if (due.includes('night')) display = 'Tomorrow night';
+    else display = 'Tomorrow';
+  } else if (bucket === 'nextWeek' && resolvedDate && resolvedDate <= endOfWeek(today)) {
+    display = 'This week';
+  } else if (bucket === 'nextWeekend' && resolvedDate && resolvedDate <= endOfWeek(addDays(today, 7))) {
+    display = 'This weekend';
+  }
+
+  return { raw, resolvedDate, display, isToday, isTomorrow, isOverdue, bucket };
+}
+
+function getDisplayDueText(task) {
+  return resolveDueInfo(task.due_text, task).display;
+}
+
 function isTodayTask(task) {
-  return String(task.due_text || '').toLowerCase().includes('today');
+  return resolveDueInfo(task.due_text, task).isToday;
 }
 
 function renderTodaySpotlight() {
@@ -642,6 +901,7 @@ function render() {
   syncFilterChips();
   saveSettings();
   setupVoiceRecognition();
+  refreshDevConsole();
 
   panelGrid.innerHTML='';
   visiblePanels().forEach(panel => {
@@ -683,10 +943,12 @@ function render() {
 function renderCard(task) {
   const ownerClass = task.owner === 'Skye' ? 'owner skye' : 'owner wes';
   const cardOwnerClass = task.owner === 'Skye' ? 'owner-skye' : 'owner-wes';
-  const dueClass = isTodayTask(task) ? 'meta-pill today-pill' : 'meta-pill';
+  const dueInfo = resolveDueInfo(task.due_text, task);
+  const dueClass = dueInfo.isOverdue ? 'meta-pill overdue-pill' : (dueInfo.isToday ? 'meta-pill today-pill' : 'meta-pill');
+  const displayDue = dueInfo.display;
   const dueText = task.panel==='done' || task.panel==='archived'
-    ? `✅ ${esc(task.due_text || 'Finished')}`
-    : `📅 ${esc(task.due_text || 'No due date')}`;
+    ? `✅ ${esc(displayDue || 'Finished')}`
+    : `${dueInfo.isOverdue ? '❗' : '📅'} ${esc(displayDue || 'No due date')}`;
   const tagText = task.tag ? `<div class="meta-pill">🏷️ ${esc(task.tag)}</div>` : '';
   const descText = task.description ? `<p class="desc">${esc(task.description)}</p>` : '';
   const todayClass = isTodayTask(task) ? 'today-card' : '';
@@ -735,9 +997,8 @@ function nextPanel(panel) {
 }
 
 async function loadTasks(silent=false) {
-  recordTrace(`loadTasks(${silent ? 'silent' : 'normal'}) called`);
   const result = await supabase.from('tasks').select('*').eq('household_id', HOUSEHOLD_ID).order('created_at', { ascending: false });
-  if (result.error) { recordDevError('loadTasks error: ' + result.error.message); throw result.error; }
+  if (result.error) throw result.error;
   tasks = (result.data || []).map(t => {
     const base = Object.assign({archived:false, archived_at:null}, t);
     let panel = base.archived ? 'archived' : base.panel;
@@ -745,8 +1006,8 @@ async function loadTasks(silent=false) {
     return Object.assign(base, {panel});
   });
   lastLoadSucceeded = true;
-  recordTrace('loadTasks returned ' + ((result.data || []).length) + ' rows');
   render();
+  refreshDevConsole();
   if (!silent) updateStatus();
 }
 
@@ -1076,7 +1337,6 @@ function connectRealtime() {
       }
     })
     .subscribe(status => {
-      recordTrace('Realtime status: ' + status);
       if (status === 'SUBSCRIBED') realtimeHealthy = true;
       else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') realtimeHealthy = false;
       updateStatus();
@@ -1096,7 +1356,7 @@ function showUndoToast(taskId, title) {
   undoToastTimer = setTimeout(() => {
     toast.style.display = 'none';
     lastVoiceAddedTaskId = null;
-  }, 5000);
+  }, 8000);
 }
 
 async function undoLastVoiceAdd() {
@@ -1202,33 +1462,7 @@ function toggleVoiceInput() {
   }
 }
 
-async function runDevConnectionTest() {
-  recordTrace('Manual connection test started');
-  try {
-    if (!window.supabase || !window.supabase.createClient) {
-      recordDevError('window.supabase not available');
-      return;
-    }
-    if (!supabase) {
-      recordTrace('Creating Supabase client for manual test');
-      recordTrace('Creating Supabase client');
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    recordTrace('Supabase client created');
-    }
-    const result = await supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('household_id', HOUSEHOLD_ID);
-    if (result.error) {
-      recordDevError('Connection test error: ' + result.error.message);
-    } else {
-      recordTrace('Connection test succeeded');
-      recordTrace('Task table reachable');
-    }
-  } catch (e) {
-    recordDevError('Connection test exception: ' + (e && (e.message || e.toString())));
-  }
-}
-
-async function init() {
-  recordTrace('init() entered');
+async function init() { recordTrace("init start");
   notesBox.value = localStorage.getItem(NOTES_KEY) || '';
   notesBox.addEventListener('input', () => localStorage.setItem(NOTES_KEY, notesBox.value));
   saveSettings();
@@ -1240,22 +1474,15 @@ async function init() {
   }
 
   try {
-    recordTrace('Creating Supabase client');
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    recordTrace('Supabase client created');
     setStatus('loading tasks…');
-    recordTrace('Initial loadTasks() starting');
     await loadTasks();
-    recordTrace('Initial loadTasks() succeeded');
     updateStatus();
-    recordTrace('Connecting realtime');
     connectRealtime();
-    recordTrace('Starting polling');
     startPolling();
     if (!localStorage.getItem(TUTORIAL_SEEN_KEY)) openTutorial();
   } catch (err) {
     console.error(err);
-    recordDevError('init() failed: ' + (err && (err.message || err.toString())));
     setStatus('connection error');
     alert('Could not connect to Supabase. Check your URL, key, and table setup.');
   }
@@ -1358,8 +1585,54 @@ $('clearFiltersBtn').addEventListener('click', () => {
   render();
 });
 
-recordTrace('script loaded');
-window.addEventListener('DOMContentLoaded', () => recordTrace('DOMContentLoaded'));
+
+function bindDevConsoleControls() {
+  const setBtn = $('devSetDateBtn');
+  const clearBtn = $('devClearDateBtn');
+  const badge = $('versionBadge');
+  if (!setBtn || !clearBtn || !badge) return;
+
+  setBtn.addEventListener('click', () => {
+    const value = $('devDateInput').value;
+    setDevTestDate(value);
+  });
+  clearBtn.addEventListener('click', () => {
+    setDevTestDate('');
+  });
+
+  const startDevPress = (e) => {
+    if (e) e.preventDefault();
+    cancelDevPress();
+    devPressTimer = setTimeout(() => {
+      toggleDevConsole();
+      devPressTimer = null;
+    }, 650);
+  };
+  const cancelDevPress = () => {
+    if (devPressTimer) {
+      clearTimeout(devPressTimer);
+      devPressTimer = null;
+    }
+  };
+
+  badge.addEventListener('touchstart', startDevPress, { passive: false });
+  badge.addEventListener('touchend', cancelDevPress, { passive: false });
+  badge.addEventListener('touchmove', cancelDevPress, { passive: false });
+  badge.addEventListener('touchcancel', cancelDevPress, { passive: false });
+  badge.addEventListener('contextmenu', (e) => e.preventDefault());
+  badge.addEventListener('selectstart', (e) => e.preventDefault());
+  badge.addEventListener('mousedown', startDevPress);
+  badge.addEventListener('mouseup', cancelDevPress);
+  badge.addEventListener('mouseleave', cancelDevPress);
+}
+
+window.addEventListener('DOMContentLoaded', bindDevConsoleControls);
+
+$('devDateInput').addEventListener('change', () => {
+  const value = $('devDateInput').value;
+  if (value) setDevTestDate(value);
+});
+
 window.addEventListener('error', (event) => {
   recordDevError(`${event.message || 'Script error'}${event.filename ? ' @ ' + event.filename.split('/').pop() : ''}${event.lineno ? ':' + event.lineno : ''}`);
 });
@@ -1383,6 +1656,29 @@ if ('serviceWorker' in navigator) {
 </script>
 
 
+
+<div id="devConsole" class="dev-console" aria-hidden="true">
+  <h3>Dev Console</h3>
+  <div class="dev-grid">
+    <div class="dev-meta" id="devMeta">Build: v39</div>
+    <div class="dev-row">
+      <input id="devDateInput" type="date" />
+      <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
+      <button id="devClearDateBtn" type="button" class="small-btn">Use real date</button>
+    </div>
+    <div class="dev-meta" id="devDateStatus">Using real device date</div>
+    <div class="dev-meta" id="devTaskStats">
+<div id="devTrace" class="dev-meta">No trace yet.</div>
+<div id="devErrors" class="dev-meta">No errors.</div><div>Tasks: 0</div>
+    <div class="section-card" style="padding:10px 12px;">
+      <div class="section-title">Recent errors</div>
+      <div id="devErrors" class="dev-meta">No captured errors.</div>
+    </div>
+    <div class="dev-link">Tip: press and hold the version badge to open or close this panel.</div>
+  </div>
+</div>
+
+
 <div id="versionBadge" style="
 position: fixed;
 bottom: 10px;
@@ -1395,7 +1691,11 @@ border: 1px solid rgba(255,255,255,.08);
 padding: 5px 8px;
 border-radius: 999px;
 backdrop-filter: blur(4px);
-">v28</div>
+touch-action: manipulation;
+user-select: none;
+-webkit-user-select: none;
+-webkit-touch-callout: none;
+">v39</div>
 
 </body>
 </html>
