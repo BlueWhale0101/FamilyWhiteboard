@@ -366,7 +366,7 @@ border-radius: 999px;
 <li>If you do not type a name, the <strong>Wes / Skye</strong> toggle decides the owner.</li>
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
-<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li>
+<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li><li>Add a simple tag with a hashtag, like <strong>#party</strong> or <strong>#shopping</strong>. The tag is stored separately and removed from the task title.</li>
 <li>Swipe <strong>left</strong> on a card to move it to the next basket.</li>
 <li>Swipe <strong>right</strong> on a card to open edit.</li>
 </ul>
@@ -375,6 +375,7 @@ border-radius: 999px;
   <div class="example-chip">Wes bins Tuesday morning</div>
   <div class="example-chip">laundry for Skye Friday afternoon</div>
   <div class="example-chip">plan outing this weekend</div>
+  <div class="example-chip">Skye buy balloons Friday #party</div>
 </div>
 <div class="dialog-actions"><div></div><div class="actions-right"><button id="closeHelpBtn" type="button" class="small-btn">Close</button></div></div>
 </div></div>
@@ -494,7 +495,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v36 • Visible version badge should say v36`;
+  if (meta) meta.textContent = `Build: v36.1 • Visible version badge should say v36.1`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -709,13 +710,25 @@ function cleanupTaskTitle(text) {
   return t;
 }
 
+
+function extractTag(text) {
+  const m = String(text || '').match(/(?:^|\s)#([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : '';
+}
+
+function stripTag(text) {
+  return clean(String(text || '').replace(/(?:^|\s)#[a-zA-Z0-9_-]+/g, ' '));
+}
+
 function parseQuickText(raw) {
   let working=String(raw || '').trim();
+  const tag = extractTag(working);
+  working = stripTag(working);
   const o=extractOwner(working, selectedOwner); working=o.text;
   const d=extractDue(working); working=d.text;
   working = cleanupTaskTitle(working);
-  if(!working) working=cleanupTaskTitle(String(raw || '').trim());
-  return {title:working,owner:o.owner,panel:d.due ? 'upcoming' : 'backlog',due:d.due,tag:'',description:''};
+  if(!working) working=cleanupTaskTitle(stripTag(String(raw || '').trim()));
+  return {title:working,owner:o.owner,panel:d.due ? 'upcoming' : 'backlog',due:d.due,tag:tag,description:''};
 }
 
 function matchesFilters(task) {
@@ -938,15 +951,14 @@ function renderCard(task) {
     quick = `<div class="quick"><button class="mini-btn" data-action="done" data-id="${task.id}">Done</button><button class="mini-btn" data-action="next-panel" data-id="${task.id}">Move</button><button class="icon-btn edit-btn" data-action="edit" data-id="${task.id}" aria-label="Edit task">✎</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
   }
   const hint = task.panel === 'archived' ? '' : '<div class="swipe-hint">← next basket • → edit</div>';
-  const tagPill = task.tag ? `<span class='meta-pill'>#${esc(task.tag)}</span>` : '';
-return `
+  return `
     <article class="card ${todayClass} ${cardOwnerClass}" data-id="${task.id}">
       <div class="task-row">
         <h3 class="title">${esc(task.title)}</h3>
         <div class="${ownerClass}">${esc(task.owner || '')}</div>
       </div>
       <div class="meta">
-        <div class="${dueClass}">${dueText} ${tagPill}</div>
+        <div class="${dueClass}">${dueText}</div>
         ${tagText}
       </div>
       ${descText}
@@ -1036,7 +1048,7 @@ async function addQuickTask(options = {}) {
     owner: parsed.owner,
     panel: parsed.due ? 'upcoming' : 'backlog',
     due_text: parsed.due,
-    tag: '',
+    tag: parsed.tag || '',
     description: '',
     archived: false,
     archived_at: null,
@@ -1630,7 +1642,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v36</div>
+    <div class="dev-meta" id="devMeta">Build: v36.1</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1659,7 +1671,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v36</div>
+">v36.1</div>
 
 </body>
 </html>
