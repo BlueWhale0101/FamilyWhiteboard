@@ -94,7 +94,6 @@ transform:rotate(10deg);pointer-events:none}
 .card.swipe-left{box-shadow:0 0 0 2px rgba(158,212,138,.18)}
 .card.swipe-right{box-shadow:0 0 0 2px rgba(215,241,164,.22)}
 .card.today-card{border-color:rgba(215,241,164,.22);background:linear-gradient(180deg, rgba(215,241,164,.09), rgba(255,255,255,.01)), var(--card)}
-.card.recurring-card{border-color:rgba(112,164,255,.28);background:linear-gradient(180deg, rgba(112,164,255,.10), rgba(255,255,255,.01)), var(--card)}
 .card.owner-wes::before{background:linear-gradient(180deg,var(--wes), #84d0a2)}
 .card.owner-skye::before{background:linear-gradient(180deg,var(--skye), #d6a7e5)}
 .owner{font-size:12px;padding:7px 10px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);color:#eef7ef}
@@ -107,7 +106,6 @@ transform:rotate(10deg);pointer-events:none}
 .meta-pill{background:var(--card-2);border:1px solid var(--line);color:#d8e5da;font-size:13px;padding:7px 11px;border-radius:999px}
 .meta-pill.today-pill{background:rgba(215,241,164,.16);border-color:rgba(215,241,164,.24);color:#f2fbdb;font-weight:700}
 .meta-pill.overdue-pill{background:rgba(217,114,114,.16);border-color:rgba(217,114,114,.28);color:#ffdede;font-weight:700}
-.meta-pill.recurrence-pill{background:rgba(112,164,255,.16);border-color:rgba(112,164,255,.28);color:#e8f1ff;font-weight:700}
 .desc{padding-left:8px;margin:10px 0 0;color:#ecf3ed;font-size:15px;line-height:1.55;white-space:pre-wrap}
 .quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:10px 14px;font-size:14px}
@@ -385,7 +383,7 @@ border-radius: 999px;
 <li>If you do not type a name, the <strong>Wes / Skye</strong> toggle decides the owner.</li>
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
-<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li><li>Add a simple tag with a hashtag, like <strong>#party</strong> or <strong>#shopping</strong>. The tag is stored separately and removed from the task title.</li><li>You can also edit a tag in the task details view and filter the board by existing tags.</li><li>Recurring tasks can be set in the task details view: daily, weekly, weekdays, or monthly. When you complete one, the next one is created automatically.</li>
+<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li><li>Add a simple tag with a hashtag, like <strong>#party</strong> or <strong>#shopping</strong>. The tag is stored separately and removed from the task title.</li><li>You can also edit a tag in the task details view and filter the board by existing tags.</li><li>Recurring tasks can be set in the task details view: daily, weekly, weekdays, or monthly. When you complete one, the next one is created automatically.</li><li>You can also use specific dates like <strong>Oct 12</strong>, <strong>10/12</strong>, or <strong>2026-10-12</strong>. Far out they stay specific, and closer in they roll to weekday, Tomorrow, Today, and Overdue.</li>
 <li>Swipe <strong>left</strong> on a card to move it to the next basket.</li>
 <li>Swipe <strong>right</strong> on a card to open edit.</li>
 </ul>
@@ -395,6 +393,7 @@ border-radius: 999px;
   <div class="example-chip">laundry for Skye Friday afternoon</div>
   <div class="example-chip">plan outing this weekend</div>
   <div class="example-chip">Skye buy balloons Friday #party</div>
+  <div class="example-chip">Wes order supplies Oct 12 #project</div>
 </div>
 <div class="dialog-actions"><div></div><div class="actions-right"><button id="closeHelpBtn" type="button" class="small-btn">Close</button></div></div>
 </div></div>
@@ -514,7 +513,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v39 • Visible version badge should say v39`;
+  if (meta) meta.textContent = `Build: v40 • Visible version badge should say v40`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -628,6 +627,75 @@ function dueInfo(task) {
 }
 
 
+
+
+function tryParseAbsoluteDate(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return null;
+
+  let m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return isNaN(d.getTime()) ? null : startOfDay(d);
+  }
+
+  m = raw.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+  if (m) {
+    let year = m[3] ? Number(m[3].length === 2 ? '20' + m[3] : m[3]) : now().getFullYear();
+    let d = new Date(year, Number(m[1]) - 1, Number(m[2]));
+    if (!m[3]) {
+      const today = startOfDay(now());
+      const diff = Math.round((startOfDay(d).getTime() - today.getTime()) / 86400000);
+      if (diff < -30) d = new Date(year + 1, Number(m[1]) - 1, Number(m[2]));
+    }
+    return isNaN(d.getTime()) ? null : startOfDay(d);
+  }
+
+  m = raw.match(/^([A-Za-z]{3,9})\s+(\d{1,2})(?:,\s*|\s+)?(\d{4})?$/) || raw.match(/^(\d{1,2})\s+([A-Za-z]{3,9})(?:\s+)?(\d{4})?$/);
+  if (m) {
+    const months = {
+      jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,
+      jul:6,july:6,aug:7,august:7,sep:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11
+    };
+    let day, monthName, year;
+    if (isNaN(Number(m[1]))) {
+      monthName = m[1].toLowerCase();
+      day = Number(m[2]);
+      year = m[3] ? Number(m[3]) : now().getFullYear();
+    } else {
+      day = Number(m[1]);
+      monthName = m[2].toLowerCase();
+      year = m[3] ? Number(m[3]) : now().getFullYear();
+    }
+    if (monthName in months) {
+      let d = new Date(year, months[monthName], day);
+      if (!m[3]) {
+        const today = startOfDay(now());
+        const diff = Math.round((startOfDay(d).getTime() - today.getTime()) / 86400000);
+        if (diff < -30) d = new Date(year + 1, months[monthName], day);
+      }
+      return isNaN(d.getTime()) ? null : startOfDay(d);
+    }
+  }
+
+  return null;
+}
+
+function formatAbsoluteDate(date) {
+  try {
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } catch (e) {
+    return date.toISOString().slice(0, 10);
+  }
+}
+
+function weekdayDisplayName(date) {
+  try {
+    return date.toLocaleDateString(undefined, { weekday: 'long' });
+  } catch (e) {
+    return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][date.getDay()];
+  }
+}
 
 function shiftDueTextForRecurrence(dueText, recurrence) {
   const raw = String(dueText || '').trim();
@@ -864,38 +932,42 @@ function resolveDueInfo(dueText, task) {
   const due = raw.toLowerCase();
   const today = startOfDay(now());
   const tomorrow = addDays(today, 1);
-  const dayAfterTomorrow = addDays(today, 2);
 
   if (!raw) {
     return { raw, resolvedDate: null, display: 'No due date', isToday: false, isTomorrow: false, isOverdue: false, bucket: 'none' };
   }
 
   const weekdayMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-  const weekdayMatch = due.match(/(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/);
+  const weekdayMatch = due.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/);
 
   let resolvedDate = null;
   let bucket = 'text';
 
-  // Anchor relative dates to created_at when available so test date changes work predictably.
+  const absoluteDate = tryParseAbsoluteDate(raw);
+  if (absoluteDate) {
+    resolvedDate = absoluteDate;
+    bucket = 'absolute';
+  }
+
   const createdBase = task && task.created_at ? startOfDay(new Date(task.created_at)) : today;
 
-  if (due.includes('day after tomorrow')) {
+  if (!resolvedDate && due.includes('day after tomorrow')) {
     resolvedDate = addDays(createdBase, 2); bucket = 'relative';
-  } else if (due.includes('tomorrow')) {
+  } else if (!resolvedDate && due.includes('tomorrow')) {
     resolvedDate = addDays(createdBase, 1); bucket = 'relative';
-  } else if (due.includes('today') || due.includes('tonight') || due.includes('this morning') || due.includes('this afternoon')) {
+  } else if (!resolvedDate && (due.includes('today') || due.includes('tonight') || due.includes('this morning') || due.includes('this afternoon'))) {
     resolvedDate = createdBase; bucket = 'relative';
-  } else if (due.includes('this weekend')) {
+  } else if (!resolvedDate && due.includes('this weekend')) {
     const saturday = addDays(createdBase, (6 - createdBase.getDay()) % 7);
     resolvedDate = saturday; bucket = 'thisWeekend';
-  } else if (due.includes('next weekend')) {
+  } else if (!resolvedDate && due.includes('next weekend')) {
     const nextSaturday = addDays(createdBase, ((6 - createdBase.getDay()) % 7) + 7);
     resolvedDate = nextSaturday; bucket = 'nextWeekend';
-  } else if (due.includes('this week')) {
+  } else if (!resolvedDate && due.includes('this week')) {
     resolvedDate = endOfWeek(createdBase); bucket = 'thisWeek';
-  } else if (due.includes('next week')) {
+  } else if (!resolvedDate && due.includes('next week')) {
     resolvedDate = addDays(endOfWeek(createdBase), 7); bucket = 'nextWeek';
-  } else if (weekdayMatch) {
+  } else if (!resolvedDate && weekdayMatch) {
     const targetDow = weekdayMap[weekdayMatch[1]];
     const createdDow = createdBase.getDay();
     const delta = (targetDow - createdDow + 7) % 7;
@@ -926,6 +998,15 @@ function resolveDueInfo(dueText, task) {
     display = 'This week';
   } else if (bucket === 'nextWeekend' && resolvedDate && resolvedDate <= endOfWeek(addDays(today, 7))) {
     display = 'This weekend';
+  } else if (bucket === 'absolute' && resolvedDate) {
+    const diffDays = Math.round((startOfDay(resolvedDate).getTime() - today.getTime()) / 86400000);
+    if (diffDays > 7) {
+      display = formatAbsoluteDate(resolvedDate);
+    } else if (diffDays > 1) {
+      display = weekdayDisplayName(resolvedDate);
+    } else {
+      display = formatAbsoluteDate(resolvedDate);
+    }
   }
 
   return { raw, resolvedDate, display, isToday, isTomorrow, isOverdue, bucket };
@@ -1068,10 +1149,9 @@ function renderCard(task) {
     ? `✅ ${esc(displayDue || 'Finished')}`
     : `${dueInfo.isOverdue ? '❗' : '📅'} ${esc(displayDue || 'No due date')}`;
   const tagText = task.tag ? `<div class="meta-pill">🏷️ ${esc(task.tag)}</div>` : '';
-  const recurrenceText = task.recurrence ? `<div class="meta-pill recurrence-pill">🔁 ${esc(task.recurrence)}</div>` : '';
+  const recurrenceText = task.recurrence ? `<div class="meta-pill">🔁 ${esc(task.recurrence)}</div>` : '';
   const descText = task.description ? `<p class="desc">${esc(task.description)}</p>` : '';
   const todayClass = isTodayTask(task) ? 'today-card' : '';
-  const recurringClass = task.recurrence ? 'recurring-card' : '';
   let quick = '';
   if (task.panel === 'archived') {
     quick = `<div class="quick"><button class="mini-btn" data-action="restore-archive" data-id="${task.id}">Restore</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
@@ -1082,7 +1162,7 @@ function renderCard(task) {
   }
   const hint = task.panel === 'archived' ? '' : '<div class="swipe-hint">← next basket • → edit</div>';
   return `
-    <article class="card ${todayClass} ${recurringClass} ${cardOwnerClass}" data-id="${task.id}">
+    <article class="card ${todayClass} ${cardOwnerClass}" data-id="${task.id}">
       <div class="task-row">
         <h3 class="title">${esc(task.title)}</h3>
         <div class="${ownerClass}">${esc(task.owner || '')}</div>
@@ -1784,7 +1864,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v39</div>
+    <div class="dev-meta" id="devMeta">Build: v40</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1813,7 +1893,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v39</div>
+">v40</div>
 
 </body>
 </html>
