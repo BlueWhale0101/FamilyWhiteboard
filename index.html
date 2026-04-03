@@ -713,9 +713,9 @@ function togglePanel(e) {
 function nextPanel(panel) {
   switch (panel) {
     case 'backlog': return 'upcoming'
-    case 'upcoming': return 'in_motion'
-    case 'in_motion': return 'done'
-    case 'done': return 'archive'
+    case 'upcoming': return 'inMotion'
+    case 'inMotion': return 'done'
+    case 'done': return 'archived'
     default: return panel
   }
 }
@@ -739,18 +739,6 @@ async function forceRefreshSequence() {
   try { await loadTasks(true); } catch (e) { console.error('Immediate refresh failed', e); }
   setTimeout(async () => { try { await loadTasks(true); } catch (e) { console.error('500ms refresh failed', e); } }, 500);
   setTimeout(async () => { try { await loadTasks(true); } catch (e) { console.error('2000ms refresh failed', e); } }, 2000);
-}
-
-
-function getNextPanel(panel) {
-  switch(panel) {
-    case 'backlog': return 'upcoming';
-    case 'upcoming': return 'inMotion';
-    case 'inMotion': return 'done';
-    case 'done': return 'archived';
-    case 'archived': return 'archived';
-    default: return 'upcoming';
-  }
 }
 
 function upsertTaskInMemory(task) {
