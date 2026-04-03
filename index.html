@@ -494,7 +494,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v35 • Visible version badge should say v35`;
+  if (meta) meta.textContent = `Build: v36 • Visible version badge should say v36`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -508,12 +508,25 @@ function refreshDevConsole() {
     const overdueCount = tasks.filter(t => resolveDueInfo(t.due_text, t).isOverdue).length;
     taskStats.textContent = `Tasks loaded: ${tasks.length} • Today: ${todayCount} • Overdue: ${overdueCount}`;
   }
+  const errorsBox = $('devErrors');
+  if (errorsBox) {
+    errorsBox.innerHTML = devErrors.length
+      ? devErrors.map(e => `<div style="margin-bottom:6px;"><strong>${esc(e.time.slice(11,19))}</strong> — ${esc(e.message)}</div>`).join('')
+      : 'No captured errors.';
+  }
 }
 function toggleDevConsole() {
   const panel = $('devConsole');
   if (!panel) return;
   panel.classList.toggle('open');
   panel.setAttribute('aria-hidden', panel.classList.contains('open') ? 'false' : 'true');
+  refreshDevConsole();
+}
+const devErrors = [];
+function recordDevError(message) {
+  const msg = String(message || 'Unknown error');
+  devErrors.unshift({ time: new Date().toISOString(), message: msg });
+  while (devErrors.length > 8) devErrors.pop();
   refreshDevConsole();
 }
 function setDevTestDate(value) {
@@ -1602,9 +1615,17 @@ $('devDateInput').addEventListener('change', () => {
   if (value) setDevTestDate(value);
 });
 
+window.addEventListener('error', (event) => {
+  recordDevError(`${event.message || 'Script error'}${event.filename ? ' @ ' + event.filename.split('/').pop() : ''}${event.lineno ? ':' + event.lineno : ''}`);
+});
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason && (event.reason.message || event.reason.toString()) || 'Unhandled promise rejection';
+  recordDevError(reason);
+});
+
 setSelectedOwner(selectedOwner);
 render();
-init();
+try { init(); } catch (e) { recordDevError(e && (e.message || e.toString())); throw e; }
 })();
 </script>
 
@@ -1621,7 +1642,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v35</div>
+    <div class="dev-meta" id="devMeta">Build: v36</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1629,6 +1650,10 @@ if ('serviceWorker' in navigator) {
     </div>
     <div class="dev-meta" id="devDateStatus">Using real device date</div>
     <div class="dev-meta" id="devTaskStats">Tasks: 0</div>
+    <div class="section-card" style="padding:10px 12px;">
+      <div class="section-title">Recent errors</div>
+      <div id="devErrors" class="dev-meta">No captured errors.</div>
+    </div>
     <div class="dev-link">Tip: press and hold the version badge to open or close this panel.</div>
   </div>
 </div>
@@ -1650,7 +1675,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v35</div>
+">v36</div>
 
 </body>
 </html>
