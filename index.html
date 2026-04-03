@@ -710,8 +710,14 @@ function togglePanel(e) {
   render();
 }
 
-function nextPanel(k) {
-  return k==='backlog' ? 'inMotion' : k==='upcoming' ? 'inMotion' : k==='inMotion' ? 'waiting' : k==='waiting' ? 'done' : 'upcoming';
+function nextPanel(panel) {
+  switch (panel) {
+    case 'backlog': return 'upcoming'
+    case 'upcoming': return 'in_motion'
+    case 'in_motion': return 'done'
+    case 'done': return 'archive'
+    default: return panel
+  }
 }
 
 async function loadTasks(silent=false) {
