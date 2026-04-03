@@ -94,6 +94,7 @@ transform:rotate(10deg);pointer-events:none}
 .card.swipe-left{box-shadow:0 0 0 2px rgba(158,212,138,.18)}
 .card.swipe-right{box-shadow:0 0 0 2px rgba(215,241,164,.22)}
 .card.today-card{border-color:rgba(215,241,164,.22);background:linear-gradient(180deg, rgba(215,241,164,.09), rgba(255,255,255,.01)), var(--card)}
+.card.recurring-card{border-color:rgba(112,164,255,.28);background:linear-gradient(180deg, rgba(112,164,255,.10), rgba(255,255,255,.01)), var(--card)}
 .card.owner-wes::before{background:linear-gradient(180deg,var(--wes), #84d0a2)}
 .card.owner-skye::before{background:linear-gradient(180deg,var(--skye), #d6a7e5)}
 .owner{font-size:12px;padding:7px 10px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.06);color:#eef7ef}
@@ -106,6 +107,7 @@ transform:rotate(10deg);pointer-events:none}
 .meta-pill{background:var(--card-2);border:1px solid var(--line);color:#d8e5da;font-size:13px;padding:7px 11px;border-radius:999px}
 .meta-pill.today-pill{background:rgba(215,241,164,.16);border-color:rgba(215,241,164,.24);color:#f2fbdb;font-weight:700}
 .meta-pill.overdue-pill{background:rgba(217,114,114,.16);border-color:rgba(217,114,114,.28);color:#ffdede;font-weight:700}
+.meta-pill.recurrence-pill{background:rgba(112,164,255,.16);border-color:rgba(112,164,255,.28);color:#e8f1ff;font-weight:700}
 .desc{padding-left:8px;margin:10px 0 0;color:#ecf3ed;font-size:15px;line-height:1.55;white-space:pre-wrap}
 .quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:10px 14px;font-size:14px}
@@ -512,7 +514,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v38 • Visible version badge should say v38`;
+  if (meta) meta.textContent = `Build: v39 • Visible version badge should say v39`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -1066,9 +1068,10 @@ function renderCard(task) {
     ? `✅ ${esc(displayDue || 'Finished')}`
     : `${dueInfo.isOverdue ? '❗' : '📅'} ${esc(displayDue || 'No due date')}`;
   const tagText = task.tag ? `<div class="meta-pill">🏷️ ${esc(task.tag)}</div>` : '';
-  const recurrenceText = task.recurrence ? `<div class="meta-pill">🔁 ${esc(task.recurrence)}</div>` : '';
+  const recurrenceText = task.recurrence ? `<div class="meta-pill recurrence-pill">🔁 ${esc(task.recurrence)}</div>` : '';
   const descText = task.description ? `<p class="desc">${esc(task.description)}</p>` : '';
   const todayClass = isTodayTask(task) ? 'today-card' : '';
+  const recurringClass = task.recurrence ? 'recurring-card' : '';
   let quick = '';
   if (task.panel === 'archived') {
     quick = `<div class="quick"><button class="mini-btn" data-action="restore-archive" data-id="${task.id}">Restore</button><button class="icon-btn danger" data-action="delete" data-id="${task.id}" aria-label="Delete task">✕</button></div>`;
@@ -1079,7 +1082,7 @@ function renderCard(task) {
   }
   const hint = task.panel === 'archived' ? '' : '<div class="swipe-hint">← next basket • → edit</div>';
   return `
-    <article class="card ${todayClass} ${cardOwnerClass}" data-id="${task.id}">
+    <article class="card ${todayClass} ${recurringClass} ${cardOwnerClass}" data-id="${task.id}">
       <div class="task-row">
         <h3 class="title">${esc(task.title)}</h3>
         <div class="${ownerClass}">${esc(task.owner || '')}</div>
@@ -1781,7 +1784,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v38</div>
+    <div class="dev-meta" id="devMeta">Build: v39</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1810,7 +1813,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v38</div>
+">v39</div>
 
 </body>
 </html>
