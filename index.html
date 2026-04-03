@@ -377,7 +377,7 @@ border-radius: 999px;
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://pssgbrtyhwoumhiynwlj.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_Ew7XkaYZV2w9vzFndOAq3w_ND4G6JQM";
+const SUPABASE_ANON_KEY = "REPLACE_WITH_YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY";
 const HOUSEHOLD_ID = "ca0ebdfc-f533-46d5-b8bb-1c6f6d0b6248";
 const NOTES_KEY = "garden-board-notes-sync-v9";
 const PANEL_STATE_KEY = "garden-board-panel-state-v9";
@@ -586,7 +586,7 @@ function isTodayTask(task) {
 function renderTodaySpotlight() {
   const list = $('todayList');
   const count = $('todayCount');
-  const items = tasks.filter(t => isTodayTask(t) && t.panel !== 'done' && t.panel !== 'archived' && matchesFilters(t));
+  const items = tasks.filter(t => isTodayTask(t) && t.panel !== 'done' && t.panel !== 'archived' && !t.archived && matchesFilters(t));
   count.textContent = items.length + (items.length === 1 ? ' task' : ' tasks');
   if (!items.length) {
     list.innerHTML = '<div class="today-empty">Nothing marked for today right now.</div>';
@@ -1341,7 +1341,7 @@ border: 1px solid rgba(255,255,255,.08);
 padding: 5px 8px;
 border-radius: 999px;
 backdrop-filter: blur(4px);
-">v27</div>
+">v28</div>
 
 </body>
 </html>
