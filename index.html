@@ -333,6 +333,21 @@ transform:rotate(10deg);pointer-events:none}
         <button type="button" class="chip-btn" data-tag-chip="">Clear tag</button>
       </div>
     </div>
+    
+    <div class="section-card">
+      <div class="section-title">Recurrence</div>
+      <div class="field">
+        <label for="editTaskRecurrence">Repeat</label>
+        <select id="editTaskRecurrence">
+          <option value="">None</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="weekdays">Weekdays</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+    </div>
+
     <div class="field"><label for="editTaskDesc">Description / notes</label><textarea id="editTaskDesc"></textarea></div>
   </div>
   <div class="dialog-actions">
@@ -368,7 +383,7 @@ border-radius: 999px;
 <li>If you do not type a name, the <strong>Wes / Skye</strong> toggle decides the owner.</li>
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
-<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li><li>Add a simple tag with a hashtag, like <strong>#party</strong> or <strong>#shopping</strong>. The tag is stored separately and removed from the task title.</li><li>You can also edit a tag in the task details view and filter the board by existing tags.</li>
+<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li><li>Add a simple tag with a hashtag, like <strong>#party</strong> or <strong>#shopping</strong>. The tag is stored separately and removed from the task title.</li><li>You can also edit a tag in the task details view and filter the board by existing tags.</li><li>Recurring tasks can be set in the task details view: daily, weekly, weekdays, or monthly. When you complete one, the next one is created automatically.</li>
 <li>Swipe <strong>left</strong> on a card to move it to the next basket.</li>
 <li>Swipe <strong>right</strong> on a card to open edit.</li>
 </ul>
@@ -426,7 +441,7 @@ const DUE_PATTERNS=[
 ];
 const $=id=>document.getElementById(id);
 const panelGrid=$('panelGrid'), quickInput=$('quickInput'), addTaskBtn=$('addTaskBtn'), ownerToggle=$('ownerToggle'), notesBox=$('notesBox'), syncStatus=$('syncStatus');
-const editBackdrop=$('editDialogBackdrop'), editTaskTitle=$('editTaskTitle'), editTaskOwner=$('editTaskOwner'), editTaskPanel=$('editTaskPanel'), editTaskDue=$('editTaskDue'), editTaskTag=$('editTaskTag'), editTaskDesc=$('editTaskDesc');
+const editBackdrop=$('editDialogBackdrop'), editTaskTitle=$('editTaskTitle'), editTaskOwner=$('editTaskOwner'), editTaskPanel=$('editTaskPanel'), editTaskDue=$('editTaskDue'), editTaskTag=$('editTaskTag'), editTaskRecurrence=$('editTaskRecurrence'), editTaskDesc=$('editTaskDesc');
 const helpBackdrop=$('helpDialogBackdrop');
 const modalOwnerChips = $('modalOwnerChips');
 const modalPanelButtons = $('modalPanelButtons');
@@ -497,7 +512,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v37 • Visible version badge should say v37`;
+  if (meta) meta.textContent = `Build: v38 • Visible version badge should say v38`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -610,6 +625,82 @@ function dueInfo(task) {
   return { label: raw, isToday: false, isOverdue: false, resolvedDate: null };
 }
 
+
+
+function shiftDueTextForRecurrence(dueText, recurrence) {
+  const raw = String(dueText || '').trim();
+  if (!recurrence) return raw;
+
+  const weekdayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const lower = raw.toLowerCase();
+
+  if (recurrence === 'daily') {
+    if (!raw || lower === 'today' || lower === 'this morning' || lower === 'this afternoon' || lower === 'tonight') return 'Tomorrow';
+    if (lower === 'tomorrow') return 'Day after tomorrow';
+    return 'Tomorrow';
+  }
+
+  if (recurrence === 'weekly') {
+    const m = raw.match(/\b(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\b/i);
+    if (m) return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+    if (!raw || lower === 'today' || lower === 'tomorrow') return 'Next week';
+    return 'Next week';
+  }
+
+  if (recurrence === 'weekdays') {
+    const m = raw.match(/\b(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\b/i);
+    if (m) {
+      const current = weekdayNames.indexOf(m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase());
+      if (current >= 0) {
+        let next = current + 1;
+        if (next === 6) next = 1; // Saturday -> Monday
+        if (next === 7) next = 1; // Sunday -> Monday
+        return weekdayNames[next];
+      }
+    }
+    const todayIdx = new Date().getDay();
+    let next = todayIdx + 1;
+    if (next === 6) next = 1;
+    if (next === 7) next = 1;
+    return weekdayNames[next];
+  }
+
+  if (recurrence === 'monthly') {
+    if (!raw || lower === 'today' || lower === 'tomorrow') return 'Next month';
+    return 'Next month';
+  }
+
+  return raw;
+}
+
+async function createNextRecurringTask(task) {
+  const recurrence = String(task.recurrence || '').trim();
+  if (!recurrence) return;
+
+  const nextDue = shiftDueTextForRecurrence(task.due_text || '', recurrence);
+  const nextRow = {
+    household_id: HOUSEHOLD_ID,
+    title: task.title,
+    owner: task.owner,
+    panel: nextDue ? 'upcoming' : 'backlog',
+    due_text: nextDue,
+    tag: task.tag || '',
+    description: task.description || '',
+    archived: false,
+    archived_at: null,
+    created_at: isoNow(),
+    updated_at: isoNow(),
+    completed_at: null,
+    recurrence: recurrence
+  };
+
+  const result = await supabase.from('tasks').insert(nextRow).select().single();
+  if (result.error) {
+    recordDevError ? recordDevError('Recurring create failed: ' + result.error.message) : console.error(result.error);
+    return;
+  }
+  if (result.data) upsertTaskInMemory(result.data);
+}
 
 function syncModalButtons() {
   modalOwnerChips.querySelectorAll('[data-owner-chip]').forEach(btn => {
@@ -975,6 +1066,7 @@ function renderCard(task) {
     ? `✅ ${esc(displayDue || 'Finished')}`
     : `${dueInfo.isOverdue ? '❗' : '📅'} ${esc(displayDue || 'No due date')}`;
   const tagText = task.tag ? `<div class="meta-pill">🏷️ ${esc(task.tag)}</div>` : '';
+  const recurrenceText = task.recurrence ? `<div class="meta-pill">🔁 ${esc(task.recurrence)}</div>` : '';
   const descText = task.description ? `<p class="desc">${esc(task.description)}</p>` : '';
   const todayClass = isTodayTask(task) ? 'today-card' : '';
   let quick = '';
@@ -995,6 +1087,7 @@ function renderCard(task) {
       <div class="meta">
         <div class="${dueClass}">${dueText}</div>
         ${tagText}
+        ${recurrenceText}
       </div>
       ${descText}
       ${quick}
@@ -1025,7 +1118,7 @@ async function loadTasks(silent=false) {
   const result = await supabase.from('tasks').select('*').eq('household_id', HOUSEHOLD_ID).order('created_at', { ascending: false });
   if (result.error) throw result.error;
   tasks = (result.data || []).map(t => {
-    const base = Object.assign({archived:false, archived_at:null}, t);
+    const base = Object.assign({archived:false, archived_at:null, recurrence:''}, t);
     let panel = base.archived ? 'archived' : base.panel;
     if (!base.archived && panel === 'upcoming' && !String(base.due_text || '').trim()) panel = 'backlog';
     return Object.assign(base, {panel});
@@ -1089,7 +1182,8 @@ async function addQuickTask(options = {}) {
     archived_at: null,
     created_at: isoNow(),
     updated_at: isoNow(),
-    completed_at: null
+    completed_at: null,
+    recurrence: ''
   };
 
   setVoiceStatus('Syncing task…');
@@ -1121,7 +1215,11 @@ async function moveTaskToNext(taskId) {
   const result = await supabase.from('tasks').update(patch).eq('id', taskId).select();
   if (result.error) alert('Could not move task: ' + result.error.message);
   else if (result.data && result.data[0]) {
-    upsertTaskInMemory(result.data[0]);
+    const movedTask = result.data[0];
+    upsertTaskInMemory(movedTask);
+    if (next === 'done' && movedTask.recurrence) {
+      try { await createNextRecurringTask(movedTask); } catch (e) { console.error('Recurring create failed', e); }
+    }
     try { await forceRefreshSequence(); } catch (e) {}
   }
   else alert('Could not move task: task update did not return a row.');
@@ -1138,7 +1236,11 @@ async function handleCardAction(e) {
     const result = await supabase.from('tasks').update(patch).eq('id', id).select();
     if (result.error) alert('Could not update task: ' + result.error.message);
     else if (result.data && result.data[0]) {
-      upsertTaskInMemory(result.data[0]);
+      const completedTask = result.data[0];
+      upsertTaskInMemory(completedTask);
+      if (completedTask.recurrence) {
+        try { await createNextRecurringTask(completedTask); } catch (e) { console.error('Recurring create failed', e); }
+      }
       try { await forceRefreshSequence(); } catch (e) {}
     }
     else alert('Could not update task: task update did not return a row.');
@@ -1238,6 +1340,7 @@ function openEditDialog(task) {
   editTaskPanel.value = task.panel === 'archived' ? 'done' : (task.panel || 'upcoming');
   editTaskDue.value = task.due_text || '';
   editTaskTag.value = String(task.tag || '').replace(/^#/, '');
+  editTaskRecurrence.value = task.recurrence || '';
   editTaskDesc.value = task.description || '';
   syncModalButtons();
   editBackdrop.classList.add('open');
@@ -1298,6 +1401,7 @@ async function saveEdit() {
     due_text: editTaskDue.value.trim(),
     tag: editTaskTag.value.trim().replace(/^#/, ''),
     description: editTaskDesc.value.trim(),
+    recurrence: editTaskRecurrence.value || '',
     updated_at: isoNow(),
     completed_at: editTaskPanel.value === 'done' ? ((current && current.completed_at) || isoNow()) : null
   };
@@ -1677,7 +1781,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v37</div>
+    <div class="dev-meta" id="devMeta">Build: v38</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1706,7 +1810,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v37</div>
+">v38</div>
 
 </body>
 </html>
