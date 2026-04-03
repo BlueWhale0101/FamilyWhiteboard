@@ -105,6 +105,7 @@ transform:rotate(10deg);pointer-events:none}
 .meta{padding-left:8px;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
 .meta-pill{background:var(--card-2);border:1px solid var(--line);color:#d8e5da;font-size:13px;padding:7px 11px;border-radius:999px}
 .meta-pill.today-pill{background:rgba(215,241,164,.16);border-color:rgba(215,241,164,.24);color:#f2fbdb;font-weight:700}
+.meta-pill.overdue-pill{background:rgba(217,114,114,.16);border-color:rgba(217,114,114,.28);color:#ffdede;font-weight:700}
 .desc{padding-left:8px;margin:10px 0 0;color:#ecf3ed;font-size:15px;line-height:1.55;white-space:pre-wrap}
 .quick{padding-left:8px;display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .mini-btn,.small-btn,.icon-btn,.chip-btn,.seg-btn{background:#2a3b30;color:#d7e5d8;border:1px solid rgba(255,255,255,.05);border-radius:999px;padding:10px 14px;font-size:14px}
@@ -209,7 +210,7 @@ transform:rotate(10deg);pointer-events:none}
 
 <section class="today-spotlight" id="todaySpotlight">
   <div class="today-header">
-    <div><h2 class="today-title">Today spotlight</h2><div class="today-sub">The clearest place to look first.</div></div>
+    <div><h2 class="today-title">Today spotlight</h2><div class="today-sub">The clearest place to look first. Due labels update as days roll forward.</div></div>
     <div class="count" id="todayCount">0 tasks</div>
   </div>
   <div id="todayList" class="today-list"></div>
@@ -327,7 +328,7 @@ transform:rotate(10deg);pointer-events:none}
 <div id="undoToast" style="
 position: fixed;
 left: 50%;
-bottom: 54px;
+bottom: 58px;
 transform: translateX(-50%);
 display: none;
 align-items: center;
@@ -336,11 +337,11 @@ z-index: 9998;
 background: rgba(19,32,25,.96);
 border: 1px solid rgba(83,118,95,.72);
 box-shadow: 0 14px 34px rgba(0,0,0,.34);
-padding: 10px 12px;
+padding: 14px 16px;
 border-radius: 999px;
 ">
-  <span id="undoToastText" style="font-size:14px;color:#eef7ef;">Task added</span>
-  <button id="undoVoiceBtn" type="button" class="small-btn" style="padding:8px 12px;">Undo</button>
+  <span id="undoToastText" style="font-size:17px;color:#eef7ef;font-weight:700;">Task added</span>
+  <button id="undoVoiceBtn" type="button" class="small-btn" style="padding:10px 14px;font-size:15px;">Undo</button>
 </div>
 
 
@@ -460,6 +461,90 @@ function updateStatus() {
 function esc(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 function clean(text){ return String(text || '').replace(/\s{2,}/g,' ').replace(/\s+,/g,',').replace(/\s+\./g,'.').replace(/^[,\-–:\s]+/,'').replace(/[,\-–:\s]+$/,'').trim(); }
 function isoNow(){ return new Date().toISOString(); }
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+function dayDiff(a, b) {
+  const ms = 24 * 60 * 60 * 1000;
+  return Math.round((a.getTime() - b.getTime()) / ms);
+}
+function nextWeekdayDate(targetDay) {
+  const today = startOfToday();
+  const current = today.getDay();
+  let delta = (targetDay - current + 7) % 7;
+  if (delta === 0) return today;
+  const out = new Date(today);
+  out.setDate(today.getDate() + delta);
+  return out;
+}
+function dueInfo(task) {
+  const raw = String((task && task.due_text) || '').trim();
+  const lower = raw.toLowerCase();
+  const today = startOfToday();
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+
+  const weekdays = {
+    sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+    thursday: 4, friday: 5, saturday: 6
+  };
+
+  if (!raw) return { label: 'No due date', isToday: false, isOverdue: false, resolvedDate: null };
+
+  if (lower === 'today' || lower === 'this morning' || lower === 'this afternoon' || lower === 'tonight') {
+    return { label: 'Today', isToday: true, isOverdue: false, resolvedDate: today };
+  }
+
+  if (lower === 'tomorrow' || lower === 'tomorrow morning' || lower === 'tomorrow afternoon' || lower === 'tomorrow night') {
+    const created = task && task.created_at ? new Date(task.created_at) : null;
+    if (created) {
+      const createdDay = new Date(created); createdDay.setHours(0,0,0,0);
+      const diff = dayDiff(today, createdDay);
+      if (diff <= 0) return { label: raw, isToday: false, isOverdue: false, resolvedDate: tomorrow };
+      if (diff === 1) return { label: 'Today', isToday: true, isOverdue: false, resolvedDate: today };
+      return { label: 'Overdue', isToday: false, isOverdue: true, resolvedDate: tomorrow };
+    }
+    return { label: raw, isToday: false, isOverdue: false, resolvedDate: tomorrow };
+  }
+
+  if (lower in weekdays) {
+    const target = weekdays[lower];
+    const created = task && task.created_at ? new Date(task.created_at) : null;
+    const createdDay = created ? new Date(created) : today;
+    createdDay.setHours(0,0,0,0);
+    const baseCurrent = createdDay.getDay();
+    let delta = (target - baseCurrent + 7) % 7;
+    const dueDate = new Date(createdDay);
+    dueDate.setDate(createdDay.getDate() + delta);
+
+    const diff = dayDiff(today, dueDate);
+    if (diff < 0) return { label: raw, isToday: false, isOverdue: false, resolvedDate: dueDate };
+    if (diff === 0) return { label: 'Today', isToday: true, isOverdue: false, resolvedDate: dueDate };
+    return { label: 'Overdue', isToday: false, isOverdue: true, resolvedDate: dueDate };
+  }
+
+  if (lower === 'this week') {
+    const dow = today.getDay();
+    const endOfWeek = new Date(today); endOfWeek.setDate(today.getDate() + (7 - dow));
+    return { label: 'This week', isToday: false, isOverdue: false, resolvedDate: endOfWeek };
+  }
+
+  if (lower === 'next week') {
+    const created = task && task.created_at ? new Date(task.created_at) : null;
+    if (created) {
+      const createdDay = new Date(created); createdDay.setHours(0,0,0,0);
+      const daysSince = dayDiff(today, createdDay);
+      if (daysSince < 7) return { label: 'Next week', isToday: false, isOverdue: false, resolvedDate: null };
+      if (daysSince < 14) return { label: 'This week', isToday: false, isOverdue: false, resolvedDate: null };
+      return { label: 'Overdue', isToday: false, isOverdue: true, resolvedDate: null };
+    }
+    return { label: raw, isToday: false, isOverdue: false, resolvedDate: null };
+  }
+
+  return { label: raw, isToday: false, isOverdue: false, resolvedDate: null };
+}
+
 
 function syncModalButtons() {
   modalOwnerChips.querySelectorAll('[data-owner-chip]').forEach(btn => {
@@ -572,15 +657,104 @@ function parseQuickText(raw) {
 }
 
 function matchesFilters(task) {
-  const hay = [task.title, task.owner, task.tag, task.due_text, task.description].join(' ').toLowerCase();
+  const hay = [task.title, task.owner, task.tag, task.due_text, getDisplayDueText(task), task.description].join(' ').toLowerCase();
   if (filters.search && !hay.includes(filters.search.toLowerCase())) return false;
   if (filters.tag && String(task.tag || '').toLowerCase() !== filters.tag.toLowerCase()) return false;
   if (filters.time && !String(task.due_text || '').toLowerCase().includes(filters.time.toLowerCase())) return false;
   return true;
 }
 
+
+function startOfDay(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function sameDay(a, b) {
+  return startOfDay(a).getTime() === startOfDay(b).getTime();
+}
+
+function endOfWeek(date) {
+  const d = startOfDay(date);
+  const day = d.getDay(); // 0=Sun
+  d.setDate(d.getDate() + (6 - day));
+  return d;
+}
+
+function resolveDueInfo(dueText) {
+  const raw = String(dueText || '').trim();
+  const due = raw.toLowerCase();
+  const today = startOfDay(new Date());
+  const tomorrow = addDays(today, 1);
+  const dayAfterTomorrow = addDays(today, 2);
+
+  if (!raw) return { raw, resolvedDate: null, display: 'No due date', isToday: false, isTomorrow: false, bucket: 'none' };
+
+  const weekdayMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+  const weekdayMatch = due.match(/(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/);
+
+  let resolvedDate = null;
+  let bucket = 'text';
+  if (due.includes('day after tomorrow')) {
+    resolvedDate = dayAfterTomorrow; bucket = 'relative';
+  } else if (due.includes('tomorrow')) {
+    resolvedDate = tomorrow; bucket = 'relative';
+  } else if (due.includes('today') || due.includes('tonight') || due.includes('this morning') || due.includes('this afternoon')) {
+    resolvedDate = today; bucket = 'relative';
+  } else if (due.includes('this weekend')) {
+    const saturday = addDays(today, (6 - today.getDay()) % 7);
+    resolvedDate = saturday; bucket = 'thisWeekend';
+  } else if (due.includes('next weekend')) {
+    const nextSaturday = addDays(today, ((6 - today.getDay()) % 7) + 7);
+    resolvedDate = nextSaturday; bucket = 'nextWeekend';
+  } else if (due.includes('this week')) {
+    resolvedDate = endOfWeek(today); bucket = 'thisWeek';
+  } else if (due.includes('next week')) {
+    resolvedDate = addDays(endOfWeek(today), 7); bucket = 'nextWeek';
+  } else if (weekdayMatch) {
+    const targetDow = weekdayMap[weekdayMatch[1]];
+    const currentDow = today.getDay();
+    let delta = (targetDow - currentDow + 7) % 7;
+    resolvedDate = addDays(today, delta);
+    bucket = 'weekday';
+  }
+
+  const isToday = resolvedDate ? sameDay(resolvedDate, today) : due.includes('today') || due.includes('tonight');
+  const isTomorrow = resolvedDate ? sameDay(resolvedDate, tomorrow) : due.includes('tomorrow');
+
+  let display = raw;
+  if (isToday) {
+    if (due.includes('morning')) display = 'Today morning';
+    else if (due.includes('afternoon')) display = 'Today afternoon';
+    else if (due.includes('night') || due.includes('tonight')) display = 'Tonight';
+    else display = 'Today';
+  } else if (isTomorrow) {
+    if (due.includes('morning')) display = 'Tomorrow morning';
+    else if (due.includes('afternoon')) display = 'Tomorrow afternoon';
+    else if (due.includes('night')) display = 'Tomorrow night';
+    else display = 'Tomorrow';
+  } else if (bucket === 'nextWeek' && resolvedDate && resolvedDate <= endOfWeek(today)) {
+    display = 'This week';
+  } else if (bucket === 'nextWeekend' && resolvedDate && resolvedDate <= endOfWeek(addDays(today, 7))) {
+    display = 'This weekend';
+  }
+
+  return { raw, resolvedDate, display, isToday, isTomorrow, bucket };
+}
+
+function getDisplayDueText(task) {
+  return resolveDueInfo(task.due_text).display;
+}
+
 function isTodayTask(task) {
-  return String(task.due_text || '').toLowerCase().includes('today');
+  return resolveDueInfo(task.due_text).isToday;
 }
 
 function renderTodaySpotlight() {
@@ -671,9 +845,10 @@ function renderCard(task) {
   const ownerClass = task.owner === 'Skye' ? 'owner skye' : 'owner wes';
   const cardOwnerClass = task.owner === 'Skye' ? 'owner-skye' : 'owner-wes';
   const dueClass = isTodayTask(task) ? 'meta-pill today-pill' : 'meta-pill';
+  const displayDue = getDisplayDueText(task);
   const dueText = task.panel==='done' || task.panel==='archived'
-    ? `✅ ${esc(task.due_text || 'Finished')}`
-    : `📅 ${esc(task.due_text || 'No due date')}`;
+    ? `✅ ${esc(displayDue || 'Finished')}`
+    : `📅 ${esc(displayDue || 'No due date')}`;
   const tagText = task.tag ? `<div class="meta-pill">🏷️ ${esc(task.tag)}</div>` : '';
   const descText = task.description ? `<p class="desc">${esc(task.description)}</p>` : '';
   const todayClass = isTodayTask(task) ? 'today-card' : '';
@@ -1079,7 +1254,7 @@ function showUndoToast(taskId, title) {
   undoToastTimer = setTimeout(() => {
     toast.style.display = 'none';
     lastVoiceAddedTaskId = null;
-  }, 5000);
+  }, 8000);
 }
 
 async function undoLastVoiceAdd() {
@@ -1335,7 +1510,7 @@ border: 1px solid rgba(255,255,255,.08);
 padding: 5px 8px;
 border-radius: 999px;
 backdrop-filter: blur(4px);
-">v28</div>
+">v29.1</div>
 
 </body>
 </html>
