@@ -404,7 +404,7 @@ const DEV_TEST_DATE_KEY = "garden-board-dev-test-date-v31";
 
 (() => {
 const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'backlog',title:'Someday/Backlog'},{key:'done',title:'Done'},{key:'archived',title:'Archived'}];
-const DEFAULT_PANEL_STATE = {upcoming:true,inMotion:false,waiting:false,backlog:false,done:false,archived:false};
+const DEFAULT_PANEL_STATE = {upcoming:true,inMotion:false,backlog:false,done:false,archived:false};
 const DUE_PATTERNS=[
 [/\bday after tomorrow\b/i,'Day after tomorrow'],
 [/\btomorrow morning\b/i,'Tomorrow morning'],[/\btomorrow afternoon\b/i,'Tomorrow afternoon'],[/\btomorrow night\b/i,'Tomorrow night'],
@@ -494,7 +494,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v31 • Visible version badge should say v31`;
+  if (meta) meta.textContent = `Build: v34 • Visible version badge should say v34`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -505,7 +505,7 @@ function refreshDevConsole() {
   }
   if (taskStats) {
     const todayCount = tasks.filter(t => isTodayTask(t)).length;
-    const overdueCount = tasks.filter(t => dueInfo(t).isOverdue).length;
+    const overdueCount = tasks.filter(t => resolveDueInfo(t.due_text, t).isOverdue).length;
     taskStats.textContent = `Tasks loaded: ${tasks.length} • Today: ${todayCount} • Overdue: ${overdueCount}`;
   }
 }
@@ -750,14 +750,16 @@ function endOfWeek(date) {
   return d;
 }
 
-function resolveDueInfo(dueText) {
+function resolveDueInfo(dueText, task) {
   const raw = String(dueText || '').trim();
   const due = raw.toLowerCase();
-  const today = startOfDay(new Date());
+  const today = startOfDay(now());
   const tomorrow = addDays(today, 1);
   const dayAfterTomorrow = addDays(today, 2);
 
-  if (!raw) return { raw, resolvedDate: null, display: 'No due date', isToday: false, isTomorrow: false, bucket: 'none' };
+  if (!raw) {
+    return { raw, resolvedDate: null, display: 'No due date', isToday: false, isTomorrow: false, isOverdue: false, bucket: 'none' };
+  }
 
   const weekdayMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
   const weekdayMatch = due.match(/(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/);
@@ -782,9 +784,10 @@ function resolveDueInfo(dueText) {
     resolvedDate = addDays(endOfWeek(today), 7); bucket = 'nextWeek';
   } else if (weekdayMatch) {
     const targetDow = weekdayMap[weekdayMatch[1]];
-    const currentDow = today.getDay();
-    let delta = (targetDow - currentDow + 7) % 7;
-    resolvedDate = addDays(today, delta);
+    const created = task && task.created_at ? startOfDay(new Date(task.created_at)) : today;
+    const createdDow = created.getDay();
+    const delta = (targetDow - createdDow + 7) % 7;
+    resolvedDate = addDays(created, delta);
     bucket = 'weekday';
   }
 
@@ -792,7 +795,12 @@ function resolveDueInfo(dueText) {
   const isTomorrow = resolvedDate ? sameDay(resolvedDate, tomorrow) : due.includes('tomorrow');
 
   let display = raw;
-  if (isToday) {
+  let isOverdue = false;
+
+  if (resolvedDate && startOfDay(resolvedDate) < today && !isToday) {
+    isOverdue = true;
+    display = 'Overdue';
+  } else if (isToday) {
     if (due.includes('morning')) display = 'Today morning';
     else if (due.includes('afternoon')) display = 'Today afternoon';
     else if (due.includes('night') || due.includes('tonight')) display = 'Tonight';
@@ -808,15 +816,15 @@ function resolveDueInfo(dueText) {
     display = 'This weekend';
   }
 
-  return { raw, resolvedDate, display, isToday, isTomorrow, bucket };
+  return { raw, resolvedDate, display, isToday, isTomorrow, isOverdue, bucket };
 }
 
 function getDisplayDueText(task) {
-  return resolveDueInfo(task.due_text).display;
+  return resolveDueInfo(task.due_text, task).display;
 }
 
 function isTodayTask(task) {
-  return resolveDueInfo(task.due_text).isToday;
+  return resolveDueInfo(task.due_text, task).isToday;
 }
 
 function renderTodaySpotlight() {
@@ -907,11 +915,12 @@ function render() {
 function renderCard(task) {
   const ownerClass = task.owner === 'Skye' ? 'owner skye' : 'owner wes';
   const cardOwnerClass = task.owner === 'Skye' ? 'owner-skye' : 'owner-wes';
-  const dueClass = isTodayTask(task) ? 'meta-pill today-pill' : 'meta-pill';
-  const displayDue = getDisplayDueText(task);
+  const dueInfo = resolveDueInfo(task.due_text, task);
+  const dueClass = dueInfo.isOverdue ? 'meta-pill overdue-pill' : (dueInfo.isToday ? 'meta-pill today-pill' : 'meta-pill');
+  const displayDue = dueInfo.display;
   const dueText = task.panel==='done' || task.panel==='archived'
     ? `✅ ${esc(displayDue || 'Finished')}`
-    : `📅 ${esc(displayDue || 'No due date')}`;
+    : `${dueInfo.isOverdue ? '❗' : '📅'} ${esc(displayDue || 'No due date')}`;
   const tagText = task.tag ? `<div class="meta-pill">🏷️ ${esc(task.tag)}</div>` : '';
   const descText = task.description ? `<p class="desc">${esc(task.description)}</p>` : '';
   const todayClass = isTodayTask(task) ? 'today-card' : '';
@@ -950,10 +959,11 @@ function togglePanel(e) {
 
 function nextPanel(panel) {
   switch (panel) {
-    case 'backlog': return 'inMotion'
+    case 'backlog': return 'upcoming'
     case 'upcoming': return 'inMotion'
     case 'inMotion': return 'done'
     case 'done': return 'archived'
+    case 'archived': return 'archived'
     default: return panel
   }
 }
@@ -1548,38 +1558,47 @@ $('clearFiltersBtn').addEventListener('click', () => {
 });
 
 
-$('devSetDateBtn').addEventListener('click', () => {
-  const value = $('devDateInput').value;
-  setDevTestDate(value);
-});
-$('devClearDateBtn').addEventListener('click', () => {
-  setDevTestDate('');
-});
-const versionBadgeEl = $('versionBadge');
-const startDevPress = (e) => {
-  if (e) e.preventDefault();
-  cancelDevPress();
-  devPressTimer = setTimeout(() => {
-    toggleDevConsole();
-    devPressTimer = null;
-  }, 650);
-};
-const cancelDevPress = () => {
-  if (devPressTimer) {
-    clearTimeout(devPressTimer);
-    devPressTimer = null;
-  }
-};
+function bindDevConsoleControls() {
+  const setBtn = $('devSetDateBtn');
+  const clearBtn = $('devClearDateBtn');
+  const badge = $('versionBadge');
+  if (!setBtn || !clearBtn || !badge) return;
 
-versionBadgeEl.addEventListener('touchstart', startDevPress, { passive: false });
-versionBadgeEl.addEventListener('touchend', cancelDevPress, { passive: false });
-versionBadgeEl.addEventListener('touchmove', cancelDevPress, { passive: false });
-versionBadgeEl.addEventListener('touchcancel', cancelDevPress, { passive: false });
-versionBadgeEl.addEventListener('contextmenu', (e) => e.preventDefault());
-versionBadgeEl.addEventListener('selectstart', (e) => e.preventDefault());
-versionBadgeEl.addEventListener('mousedown', startDevPress);
-versionBadgeEl.addEventListener('mouseup', cancelDevPress);
-versionBadgeEl.addEventListener('mouseleave', cancelDevPress);
+  setBtn.addEventListener('click', () => {
+    const value = $('devDateInput').value;
+    setDevTestDate(value);
+  });
+  clearBtn.addEventListener('click', () => {
+    setDevTestDate('');
+  });
+
+  const startDevPress = (e) => {
+    if (e) e.preventDefault();
+    cancelDevPress();
+    devPressTimer = setTimeout(() => {
+      toggleDevConsole();
+      devPressTimer = null;
+    }, 650);
+  };
+  const cancelDevPress = () => {
+    if (devPressTimer) {
+      clearTimeout(devPressTimer);
+      devPressTimer = null;
+    }
+  };
+
+  badge.addEventListener('touchstart', startDevPress, { passive: false });
+  badge.addEventListener('touchend', cancelDevPress, { passive: false });
+  badge.addEventListener('touchmove', cancelDevPress, { passive: false });
+  badge.addEventListener('touchcancel', cancelDevPress, { passive: false });
+  badge.addEventListener('contextmenu', (e) => e.preventDefault());
+  badge.addEventListener('selectstart', (e) => e.preventDefault());
+  badge.addEventListener('mousedown', startDevPress);
+  badge.addEventListener('mouseup', cancelDevPress);
+  badge.addEventListener('mouseleave', cancelDevPress);
+}
+
+window.addEventListener('DOMContentLoaded', bindDevConsoleControls);
 
 setSelectedOwner(selectedOwner);
 render();
@@ -1600,7 +1619,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v31</div>
+    <div class="dev-meta" id="devMeta">Build: v34</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1629,7 +1648,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v33</div>
+">v34</div>
 
 </body>
 </html>
