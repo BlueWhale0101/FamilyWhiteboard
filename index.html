@@ -172,6 +172,21 @@ transform:rotate(10deg);pointer-events:none}
   .today-header{align-items:flex-start;flex-direction:column}
   .tutorial-actions{flex-direction:column-reverse}
 }
+
+.dev-console{
+  position:fixed;left:12px;right:12px;bottom:52px;z-index:9997;
+  background:rgba(19,32,25,.97);border:1px solid rgba(83,118,95,.72);
+  box-shadow:var(--shadow);border-radius:20px;padding:14px;display:none;
+  max-width:860px;margin:0 auto;
+}
+.dev-console.open{display:block}
+.dev-console h3{margin:0 0 10px;font-size:18px}
+.dev-grid{display:grid;gap:12px}
+.dev-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dev-console input{background:rgba(23,38,29,.95);border:1px solid rgba(83,118,95,.72);color:var(--text);border-radius:12px;padding:10px 12px;outline:none}
+.dev-meta{font-size:13px;color:var(--muted);line-height:1.5}
+.dev-link{font-size:12px;color:#d7e5d8;opacity:.9}
+
 @media (min-width:700px){
   .page{padding:18px 16px 42px}
   .panel-grid{grid-template-columns:1fr 1fr}
@@ -385,6 +400,7 @@ const PANEL_STATE_KEY = "garden-board-panel-state-v9";
 const VOICE_PREF_KEY = "garden-board-voice-pref-v11";
 const TUTORIAL_SEEN_KEY = "garden-board-tutorial-seen-v9";
 const SETTINGS_KEY = "garden-board-settings-v9";
+const DEV_TEST_DATE_KEY = "garden-board-dev-test-date-v31";
 
 (() => {
 const PANELS=[{key:'upcoming',title:'Upcoming'},{key:'inMotion',title:'In Motion'},{key:'backlog',title:'Someday/Backlog'},{key:'done',title:'Done'},{key:'archived',title:'Archived'}];
@@ -427,6 +443,8 @@ let undoToastTimer = null;
 let recognition = null;
 let isListening = false;
 let voiceSupported = false;
+let devBadgeTapCount = 0;
+let devBadgeTapTimer = null;
 
 function loadSettings() {
   try {
@@ -461,8 +479,53 @@ function updateStatus() {
 function esc(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 function clean(text){ return String(text || '').replace(/\s{2,}/g,' ').replace(/\s+,/g,',').replace(/\s+\./g,'.').replace(/^[,\-–:\s]+/,'').replace(/[,\-–:\s]+$/,'').trim(); }
 function isoNow(){ return new Date().toISOString(); }
+function now() {
+  const override = localStorage.getItem(DEV_TEST_DATE_KEY);
+  if (override) {
+    const d = new Date(override + 'T12:00:00');
+    if (!isNaN(d.getTime())) return d;
+  }
+  return new Date();
+}
+function devDateValue() {
+  return localStorage.getItem(DEV_TEST_DATE_KEY) || '';
+}
+function refreshDevConsole() {
+  const meta = $('devMeta');
+  const dateStatus = $('devDateStatus');
+  const taskStats = $('devTaskStats');
+  const input = $('devDateInput');
+  if (meta) meta.textContent = `Build: v31 • Visible version badge should say v31`;
+  if (input) input.value = devDateValue();
+  const n = now();
+  const today = new Date(n); today.setHours(0,0,0,0);
+  if (dateStatus) {
+    dateStatus.textContent = devDateValue()
+      ? `Using test date: ${devDateValue()}`
+      : `Using real device date: ${today.toISOString().slice(0,10)}`;
+  }
+  if (taskStats) {
+    const todayCount = tasks.filter(t => isTodayTask(t)).length;
+    const overdueCount = tasks.filter(t => dueInfo(t).isOverdue).length;
+    taskStats.textContent = `Tasks loaded: ${tasks.length} • Today: ${todayCount} • Overdue: ${overdueCount}`;
+  }
+}
+function toggleDevConsole() {
+  const panel = $('devConsole');
+  if (!panel) return;
+  panel.classList.toggle('open');
+  panel.setAttribute('aria-hidden', panel.classList.contains('open') ? 'false' : 'true');
+  refreshDevConsole();
+}
+function setDevTestDate(value) {
+  if (value) localStorage.setItem(DEV_TEST_DATE_KEY, value);
+  else localStorage.removeItem(DEV_TEST_DATE_KEY);
+  refreshDevConsole();
+  render();
+}
+
 function startOfToday() {
-  const d = new Date();
+  const d = now();
   d.setHours(0,0,0,0);
   return d;
 }
@@ -803,6 +866,7 @@ function render() {
   syncFilterChips();
   saveSettings();
   setupVoiceRecognition();
+  refreshDevConsole();
 
   panelGrid.innerHTML='';
   visiblePanels().forEach(panel => {
@@ -906,6 +970,7 @@ async function loadTasks(silent=false) {
   });
   lastLoadSucceeded = true;
   render();
+  refreshDevConsole();
   if (!silent) updateStatus();
 }
 
@@ -1483,6 +1548,24 @@ $('clearFiltersBtn').addEventListener('click', () => {
   render();
 });
 
+
+$('devSetDateBtn').addEventListener('click', () => {
+  const value = $('devDateInput').value;
+  setDevTestDate(value);
+});
+$('devClearDateBtn').addEventListener('click', () => {
+  setDevTestDate('');
+});
+$('versionBadge').addEventListener('click', () => {
+  devBadgeTapCount += 1;
+  if (devBadgeTapTimer) clearTimeout(devBadgeTapTimer);
+  devBadgeTapTimer = setTimeout(() => { devBadgeTapCount = 0; }, 1200);
+  if (devBadgeTapCount >= 5) {
+    devBadgeTapCount = 0;
+    toggleDevConsole();
+  }
+});
+
 setSelectedOwner(selectedOwner);
 render();
 init();
@@ -1498,6 +1581,23 @@ if ('serviceWorker' in navigator) {
 </script>
 
 
+
+<div id="devConsole" class="dev-console" aria-hidden="true">
+  <h3>Dev Console</h3>
+  <div class="dev-grid">
+    <div class="dev-meta" id="devMeta">Build: v31</div>
+    <div class="dev-row">
+      <input id="devDateInput" type="date" />
+      <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
+      <button id="devClearDateBtn" type="button" class="small-btn">Use real date</button>
+    </div>
+    <div class="dev-meta" id="devDateStatus">Using real device date</div>
+    <div class="dev-meta" id="devTaskStats">Tasks: 0</div>
+    <div class="dev-link">Tip: tap the version badge 5 times to open or close this panel.</div>
+  </div>
+</div>
+
+
 <div id="versionBadge" style="
 position: fixed;
 bottom: 10px;
@@ -1510,7 +1610,7 @@ border: 1px solid rgba(255,255,255,.08);
 padding: 5px 8px;
 border-radius: 999px;
 backdrop-filter: blur(4px);
-">v30</div>
+">v31</div>
 
 </body>
 </html>
