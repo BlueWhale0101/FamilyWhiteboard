@@ -240,6 +240,7 @@ transform:rotate(10deg);pointer-events:none}
     <button id="clearFiltersBtn" type="button" class="small-btn">Clear all</button>
   </div>
   <div id="activeFilterSummary" class="summary-row"></div>
+  <div id="dynamicTagFilters" class="filter-chip-row" style="margin-top:10px;"></div>
   <div id="filterBody" class="filter-body collapsed">
     <input id="searchInput" class="search-input" placeholder="Search tasks, tags, owners, due text, or descriptions" />
     <div class="filter-section">
@@ -320,7 +321,8 @@ transform:rotate(10deg);pointer-events:none}
     </div>
     <div class="section-card">
       <div class="section-title">Tag</div>
-      <div class="field"><label for="editTaskTag">Tag</label><input id="editTaskTag" type="text" placeholder="Kitchen, Repair, Family..." /></div>
+      <div class="field"><label for="editTaskTag">Tag</label><input id="editTaskTag" list="tagSuggestions" type="text" placeholder="Kitchen, Repair, Family..." /></div>
+      <datalist id="tagSuggestions"></datalist>
       <div class="chip-row" style="margin-top:10px;">
         <button type="button" class="chip-btn" data-tag-chip="Kitchen">Kitchen</button>
         <button type="button" class="chip-btn" data-tag-chip="House">House</button>
@@ -366,7 +368,7 @@ border-radius: 999px;
 <li>If you do not type a name, the <strong>Wes / Skye</strong> toggle decides the owner.</li>
 <li>If you type <strong>Wes</strong> or <strong>Skye</strong>, that overrides the toggle.</li>
 <li>The parser can pull due phrases like <strong>today, tomorrow, tonight, morning, afternoon, weekdays, this week, next week</strong>, and combinations like <strong>Tuesday morning</strong> or <strong>Friday afternoon</strong>.</li>
-<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li><li>Add a simple tag with a hashtag, like <strong>#party</strong> or <strong>#shopping</strong>. The tag is stored separately and removed from the task title.</li>
+<li>Tap the <strong>mic button</strong> to dictate a task and auto-add it on supported browsers. Common filler like “remind me to” or “we need to” is cleaned up automatically, and simple helper phrases like “needs to” are stripped from the final task title, and an undo button appears for a few seconds.</li><li>Add a simple tag with a hashtag, like <strong>#party</strong> or <strong>#shopping</strong>. The tag is stored separately and removed from the task title.</li><li>You can also edit a tag in the task details view and filter the board by existing tags.</li>
 <li>Swipe <strong>left</strong> on a card to move it to the next basket.</li>
 <li>Swipe <strong>right</strong> on a card to open edit.</li>
 </ul>
@@ -495,7 +497,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v36.1 • Visible version badge should say v36.1`;
+  if (meta) meta.textContent = `Build: v37 • Visible version badge should say v37`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -867,7 +869,7 @@ function renderFilterSummary() {
   const box = $('activeFilterSummary');
   const chips = [];
   if (filters.search) chips.push(`<div class="summary-chip strong">Search: ${esc(filters.search)}</div>`);
-  if (filters.tag) chips.push(`<div class="summary-chip">Tag: ${esc(filters.tag)}</div>`);
+  if (filters.tag) chips.push(`<div class="summary-chip">Tag: #${esc(filters.tag)}</div>`);
   if (filters.time) chips.push(`<div class="summary-chip">Time: ${esc(filters.time)}</div>`);
   box.innerHTML = chips.join('');
 }
@@ -880,6 +882,37 @@ function syncFilterChips() {
   });
 }
 
+
+function allKnownTags() {
+  const tags = Array.from(new Set(tasks.map(t => String(t.tag || '').trim()).filter(Boolean)));
+  tags.sort((a, b) => a.localeCompare(b));
+  return tags;
+}
+
+function renderDynamicTagFilters() {
+  const box = $('dynamicTagFilters');
+  if (!box) return;
+  const tags = allKnownTags();
+  if (!tags.length) {
+    box.innerHTML = '';
+    return;
+  }
+  const chips = ['<button type="button" class="filter-chip ' + (!filters.tag ? 'active' : '') + '" data-dynamic-tag="">All tags</button>']
+    .concat(tags.map(tag => `<button type="button" class="filter-chip ${filters.tag === tag ? 'active' : ''}" data-dynamic-tag="${esc(tag)}">#${esc(tag)}</button>`));
+  box.innerHTML = chips.join('');
+  box.querySelectorAll('[data-dynamic-tag]').forEach(btn => btn.addEventListener('click', () => {
+    const value = btn.getAttribute('data-dynamic-tag') || '';
+    filters.tag = value;
+    render();
+  }));
+}
+
+function syncTagSuggestions() {
+  const list = $('tagSuggestions');
+  if (!list) return;
+  list.innerHTML = allKnownTags().map(tag => `<option value="${esc(tag)}"></option>`).join('');
+}
+
 function visiblePanels() {
   if (settings.focusMode) return PANELS.filter(p => p.key === 'upcoming' || p.key === 'backlog');
   return PANELS.filter(p => settings.showArchive ? true : p.key !== 'archived');
@@ -889,6 +922,8 @@ function render() {
   renderTodaySpotlight();
   renderFilterSummary();
   syncFilterChips();
+  renderDynamicTagFilters();
+  syncTagSuggestions();
   saveSettings();
   setupVoiceRecognition();
   refreshDevConsole();
@@ -1202,7 +1237,7 @@ function openEditDialog(task) {
   editTaskOwner.value = task.owner || 'Wes';
   editTaskPanel.value = task.panel === 'archived' ? 'done' : (task.panel || 'upcoming');
   editTaskDue.value = task.due_text || '';
-  editTaskTag.value = task.tag || '';
+  editTaskTag.value = String(task.tag || '').replace(/^#/, '');
   editTaskDesc.value = task.description || '';
   syncModalButtons();
   editBackdrop.classList.add('open');
@@ -1261,7 +1296,7 @@ async function saveEdit() {
     archived:false,
     archived_at:null,
     due_text: editTaskDue.value.trim(),
-    tag: editTaskTag.value.trim(),
+    tag: editTaskTag.value.trim().replace(/^#/, ''),
     description: editTaskDesc.value.trim(),
     updated_at: isoNow(),
     completed_at: editTaskPanel.value === 'done' ? ((current && current.completed_at) || isoNow()) : null
@@ -1642,7 +1677,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v36.1</div>
+    <div class="dev-meta" id="devMeta">Build: v37</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1671,7 +1706,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v36.1</div>
+">v37</div>
 
 </body>
 </html>
