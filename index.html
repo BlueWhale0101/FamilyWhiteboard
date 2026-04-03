@@ -285,7 +285,7 @@ transform:rotate(10deg);pointer-events:none}
           <button type="button" class="seg-btn" data-panel-btn="upcoming">Upcoming</button>
           <button type="button" class="seg-btn" data-panel-btn="inMotion">In Motion</button>
           
-          <button type="button" class="seg-btn" data-panel-btn="backlog">Someday/Someday/Backlog</button>
+          <button type="button" class="seg-btn" data-panel-btn="backlog">Someday/Backlog</button>
           <button type="button" class="seg-btn" data-panel-btn="done">Done</button>
         </div>
         <div class="field" style="margin-top:10px;"><select id="editTaskPanel"><option value="upcoming">Upcoming</option><option value="inMotion">In Motion</option><option value="backlog">Someday/Backlog</option><option value="done">Done</option></select></div>
@@ -712,7 +712,7 @@ function togglePanel(e) {
 
 function nextPanel(panel) {
   switch (panel) {
-    case 'backlog': return 'upcoming'
+    case 'backlog': return 'inMotion'
     case 'upcoming': return 'inMotion'
     case 'inMotion': return 'done'
     case 'done': return 'archived'
