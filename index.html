@@ -443,8 +443,7 @@ let undoToastTimer = null;
 let recognition = null;
 let isListening = false;
 let voiceSupported = false;
-let devBadgeTapCount = 0;
-let devBadgeTapTimer = null;
+let devPressTimer = null;
 
 function loadSettings() {
   try {
@@ -1556,15 +1555,28 @@ $('devSetDateBtn').addEventListener('click', () => {
 $('devClearDateBtn').addEventListener('click', () => {
   setDevTestDate('');
 });
-$('versionBadge').addEventListener('click', () => {
-  devBadgeTapCount += 1;
-  if (devBadgeTapTimer) clearTimeout(devBadgeTapTimer);
-  devBadgeTapTimer = setTimeout(() => { devBadgeTapCount = 0; }, 1200);
-  if (devBadgeTapCount >= 5) {
-    devBadgeTapCount = 0;
+const versionBadgeEl = $('versionBadge');
+const startDevPress = () => {
+  if (devPressTimer) clearTimeout(devPressTimer);
+  devPressTimer = setTimeout(() => {
     toggleDevConsole();
+    devPressTimer = null;
+  }, 700);
+};
+const cancelDevPress = () => {
+  if (devPressTimer) {
+    clearTimeout(devPressTimer);
+    devPressTimer = null;
   }
-});
+};
+
+versionBadgeEl.addEventListener('touchstart', startDevPress, { passive: true });
+versionBadgeEl.addEventListener('touchend', cancelDevPress, { passive: true });
+versionBadgeEl.addEventListener('touchmove', cancelDevPress, { passive: true });
+versionBadgeEl.addEventListener('touchcancel', cancelDevPress, { passive: true });
+versionBadgeEl.addEventListener('mousedown', startDevPress);
+versionBadgeEl.addEventListener('mouseup', cancelDevPress);
+versionBadgeEl.addEventListener('mouseleave', cancelDevPress);
 
 setSelectedOwner(selectedOwner);
 render();
@@ -1593,7 +1605,7 @@ if ('serviceWorker' in navigator) {
     </div>
     <div class="dev-meta" id="devDateStatus">Using real device date</div>
     <div class="dev-meta" id="devTaskStats">Tasks: 0</div>
-    <div class="dev-link">Tip: tap the version badge 5 times to open or close this panel.</div>
+    <div class="dev-link">Tip: press and hold the version badge to open or close this panel.</div>
   </div>
 </div>
 
@@ -1610,7 +1622,8 @@ border: 1px solid rgba(255,255,255,.08);
 padding: 5px 8px;
 border-radius: 999px;
 backdrop-filter: blur(4px);
-">v31</div>
+touch-action: manipulation;
+">v32</div>
 
 </body>
 </html>

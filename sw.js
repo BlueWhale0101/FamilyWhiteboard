@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'garden-board-shell-v31_1';
+const CACHE_NAME = 'garden-board-shell-v32_1';
 const APP_SHELL = [
   './',
   './index.html',
