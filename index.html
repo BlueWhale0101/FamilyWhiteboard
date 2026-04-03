@@ -1556,12 +1556,13 @@ $('devClearDateBtn').addEventListener('click', () => {
   setDevTestDate('');
 });
 const versionBadgeEl = $('versionBadge');
-const startDevPress = () => {
-  if (devPressTimer) clearTimeout(devPressTimer);
+const startDevPress = (e) => {
+  if (e) e.preventDefault();
+  cancelDevPress();
   devPressTimer = setTimeout(() => {
     toggleDevConsole();
     devPressTimer = null;
-  }, 700);
+  }, 650);
 };
 const cancelDevPress = () => {
   if (devPressTimer) {
@@ -1570,10 +1571,12 @@ const cancelDevPress = () => {
   }
 };
 
-versionBadgeEl.addEventListener('touchstart', startDevPress, { passive: true });
-versionBadgeEl.addEventListener('touchend', cancelDevPress, { passive: true });
-versionBadgeEl.addEventListener('touchmove', cancelDevPress, { passive: true });
-versionBadgeEl.addEventListener('touchcancel', cancelDevPress, { passive: true });
+versionBadgeEl.addEventListener('touchstart', startDevPress, { passive: false });
+versionBadgeEl.addEventListener('touchend', cancelDevPress, { passive: false });
+versionBadgeEl.addEventListener('touchmove', cancelDevPress, { passive: false });
+versionBadgeEl.addEventListener('touchcancel', cancelDevPress, { passive: false });
+versionBadgeEl.addEventListener('contextmenu', (e) => e.preventDefault());
+versionBadgeEl.addEventListener('selectstart', (e) => e.preventDefault());
 versionBadgeEl.addEventListener('mousedown', startDevPress);
 versionBadgeEl.addEventListener('mouseup', cancelDevPress);
 versionBadgeEl.addEventListener('mouseleave', cancelDevPress);
@@ -1623,7 +1626,10 @@ padding: 5px 8px;
 border-radius: 999px;
 backdrop-filter: blur(4px);
 touch-action: manipulation;
-">v32</div>
+user-select: none;
+-webkit-user-select: none;
+-webkit-touch-callout: none;
+">v33</div>
 
 </body>
 </html>
