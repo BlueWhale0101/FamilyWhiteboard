@@ -494,7 +494,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v37 • Visible version badge should say v37`;
+  if (meta) meta.textContent = `Build: v38 • Visible version badge should say v38`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -1642,7 +1642,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v37</div>
+    <div class="dev-meta" id="devMeta">Build: v38</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1675,7 +1675,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v37</div>
+">v38</div>
 
 </body>
 </html>
