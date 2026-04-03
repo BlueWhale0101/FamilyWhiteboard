@@ -478,24 +478,6 @@ function updateStatus() {
 function esc(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 function clean(text){ return String(text || '').replace(/\s{2,}/g,' ').replace(/\s+,/g,',').replace(/\s+\./g,'.').replace(/^[,\-–:\s]+/,'').replace(/[,\-–:\s]+$/,'').trim(); }
 function isoNow(){ return new Date().toISOString(); }
-
-const devTrace = [];
-const devErrors = [];
-
-function recordTrace(msg){
-  devTrace.unshift(msg);
-  if(devTrace.length>20) devTrace.pop();
-  const el=document.getElementById('devTrace');
-  if(el) el.innerHTML=devTrace.join('<br>');
-}
-
-function recordError(msg){
-  devErrors.unshift(msg);
-  if(devErrors.length>10) devErrors.pop();
-  const el=document.getElementById('devErrors');
-  if(el) el.innerHTML=devErrors.join('<br>');
-}
-
 function now() {
   const override = localStorage.getItem(DEV_TEST_DATE_KEY);
   if (override) {
@@ -512,7 +494,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v39 • Visible version badge should say v39`;
+  if (meta) meta.textContent = `Build: v35.1 • Visible version badge should say v35.1`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -526,25 +508,12 @@ function refreshDevConsole() {
     const overdueCount = tasks.filter(t => resolveDueInfo(t.due_text, t).isOverdue).length;
     taskStats.textContent = `Tasks loaded: ${tasks.length} • Today: ${todayCount} • Overdue: ${overdueCount}`;
   }
-  const errorsBox = $('devErrors');
-  if (errorsBox) {
-    errorsBox.innerHTML = devErrors.length
-      ? devErrors.map(e => `<div style="margin-bottom:6px;"><strong>${esc(e.time.slice(11,19))}</strong> — ${esc(e.message)}</div>`).join('')
-      : 'No captured errors.';
-  }
 }
 function toggleDevConsole() {
   const panel = $('devConsole');
   if (!panel) return;
   panel.classList.toggle('open');
   panel.setAttribute('aria-hidden', panel.classList.contains('open') ? 'false' : 'true');
-  refreshDevConsole();
-}
-const devErrors = [];
-function recordDevError(message) {
-  const msg = String(message || 'Unknown error');
-  devErrors.unshift({ time: new Date().toISOString(), message: msg });
-  while (devErrors.length > 8) devErrors.pop();
   refreshDevConsole();
 }
 function setDevTestDate(value) {
@@ -781,21 +750,26 @@ function endOfWeek(date) {
   return d;
 }
 
+
 function resolveDueInfo(dueText, task) {
   const raw = String(dueText || '').trim();
   const due = raw.toLowerCase();
   const today = startOfDay(now());
+  const tomorrow = addDays(today, 1);
+  const dayAfterTomorrow = addDays(today, 2);
 
   if (!raw) {
     return { raw, resolvedDate: null, display: 'No due date', isToday: false, isTomorrow: false, isOverdue: false, bucket: 'none' };
   }
 
-  const createdBase = task && task.created_at ? startOfDay(new Date(task.created_at)) : today;
   const weekdayMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
   const weekdayMatch = due.match(/(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/);
 
   let resolvedDate = null;
   let bucket = 'text';
+
+  // Anchor relative dates to created_at when available so test date changes work predictably.
+  const createdBase = task && task.created_at ? startOfDay(new Date(task.created_at)) : today;
 
   if (due.includes('day after tomorrow')) {
     resolvedDate = addDays(createdBase, 2); bucket = 'relative';
@@ -804,9 +778,11 @@ function resolveDueInfo(dueText, task) {
   } else if (due.includes('today') || due.includes('tonight') || due.includes('this morning') || due.includes('this afternoon')) {
     resolvedDate = createdBase; bucket = 'relative';
   } else if (due.includes('this weekend')) {
-    resolvedDate = addDays(createdBase, (6 - createdBase.getDay()) % 7); bucket = 'thisWeekend';
+    const saturday = addDays(createdBase, (6 - createdBase.getDay()) % 7);
+    resolvedDate = saturday; bucket = 'thisWeekend';
   } else if (due.includes('next weekend')) {
-    resolvedDate = addDays(createdBase, ((6 - createdBase.getDay()) % 7) + 7); bucket = 'nextWeekend';
+    const nextSaturday = addDays(createdBase, ((6 - createdBase.getDay()) % 7) + 7);
+    resolvedDate = nextSaturday; bucket = 'nextWeekend';
   } else if (due.includes('this week')) {
     resolvedDate = endOfWeek(createdBase); bucket = 'thisWeek';
   } else if (due.includes('next week')) {
@@ -820,7 +796,7 @@ function resolveDueInfo(dueText, task) {
   }
 
   const isToday = resolvedDate ? sameDay(resolvedDate, today) : false;
-  const isTomorrow = resolvedDate ? sameDay(resolvedDate, addDays(today, 1)) : false;
+  const isTomorrow = resolvedDate ? sameDay(resolvedDate, tomorrow) : false;
 
   let display = raw;
   let isOverdue = false;
@@ -854,6 +830,7 @@ function getDisplayDueText(task) {
 function isTodayTask(task) {
   return resolveDueInfo(task.due_text, task).isToday;
 }
+
 
 function renderTodaySpotlight() {
   const list = $('todayList');
@@ -1462,7 +1439,7 @@ function toggleVoiceInput() {
   }
 }
 
-async function init() { recordTrace("init start");
+async function init() {
   notesBox.value = localStorage.getItem(NOTES_KEY) || '';
   notesBox.addEventListener('input', () => localStorage.setItem(NOTES_KEY, notesBox.value));
   saveSettings();
@@ -1589,15 +1566,20 @@ $('clearFiltersBtn').addEventListener('click', () => {
 function bindDevConsoleControls() {
   const setBtn = $('devSetDateBtn');
   const clearBtn = $('devClearDateBtn');
+  const dateInput = $('devDateInput');
   const badge = $('versionBadge');
-  if (!setBtn || !clearBtn || !badge) return;
+  if (!setBtn || !clearBtn || !dateInput || !badge) return;
 
   setBtn.addEventListener('click', () => {
-    const value = $('devDateInput').value;
+    const value = dateInput.value;
     setDevTestDate(value);
   });
   clearBtn.addEventListener('click', () => {
     setDevTestDate('');
+  });
+  dateInput.addEventListener('change', () => {
+    const value = dateInput.value;
+    if (value) setDevTestDate(value);
   });
 
   const startDevPress = (e) => {
@@ -1628,22 +1610,9 @@ function bindDevConsoleControls() {
 
 window.addEventListener('DOMContentLoaded', bindDevConsoleControls);
 
-$('devDateInput').addEventListener('change', () => {
-  const value = $('devDateInput').value;
-  if (value) setDevTestDate(value);
-});
-
-window.addEventListener('error', (event) => {
-  recordDevError(`${event.message || 'Script error'}${event.filename ? ' @ ' + event.filename.split('/').pop() : ''}${event.lineno ? ':' + event.lineno : ''}`);
-});
-window.addEventListener('unhandledrejection', (event) => {
-  const reason = event.reason && (event.reason.message || event.reason.toString()) || 'Unhandled promise rejection';
-  recordDevError(reason);
-});
-
 setSelectedOwner(selectedOwner);
 render();
-try { init(); } catch (e) { recordDevError(e && (e.message || e.toString())); throw e; }
+init();
 })();
 </script>
 
@@ -1660,20 +1629,14 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v39</div>
+    <div class="dev-meta" id="devMeta">Build: v35.1</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
       <button id="devClearDateBtn" type="button" class="small-btn">Use real date</button>
     </div>
     <div class="dev-meta" id="devDateStatus">Using real device date</div>
-    <div class="dev-meta" id="devTaskStats">
-<div id="devTrace" class="dev-meta">No trace yet.</div>
-<div id="devErrors" class="dev-meta">No errors.</div><div>Tasks: 0</div>
-    <div class="section-card" style="padding:10px 12px;">
-      <div class="section-title">Recent errors</div>
-      <div id="devErrors" class="dev-meta">No captured errors.</div>
-    </div>
+    <div class="dev-meta" id="devTaskStats">Tasks: 0</div>
     <div class="dev-link">Tip: press and hold the version badge to open or close this panel.</div>
   </div>
 </div>
@@ -1695,7 +1658,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v39</div>
+">v35.1</div>
 
 </body>
 </html>
