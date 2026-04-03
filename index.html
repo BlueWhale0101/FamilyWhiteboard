@@ -494,7 +494,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v34 • Visible version badge should say v34`;
+  if (meta) meta.textContent = `Build: v35 • Visible version badge should say v35`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -754,45 +754,42 @@ function resolveDueInfo(dueText, task) {
   const raw = String(dueText || '').trim();
   const due = raw.toLowerCase();
   const today = startOfDay(now());
-  const tomorrow = addDays(today, 1);
-  const dayAfterTomorrow = addDays(today, 2);
 
   if (!raw) {
     return { raw, resolvedDate: null, display: 'No due date', isToday: false, isTomorrow: false, isOverdue: false, bucket: 'none' };
   }
 
+  const createdBase = task && task.created_at ? startOfDay(new Date(task.created_at)) : today;
   const weekdayMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
   const weekdayMatch = due.match(/(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/);
 
   let resolvedDate = null;
   let bucket = 'text';
+
   if (due.includes('day after tomorrow')) {
-    resolvedDate = dayAfterTomorrow; bucket = 'relative';
+    resolvedDate = addDays(createdBase, 2); bucket = 'relative';
   } else if (due.includes('tomorrow')) {
-    resolvedDate = tomorrow; bucket = 'relative';
+    resolvedDate = addDays(createdBase, 1); bucket = 'relative';
   } else if (due.includes('today') || due.includes('tonight') || due.includes('this morning') || due.includes('this afternoon')) {
-    resolvedDate = today; bucket = 'relative';
+    resolvedDate = createdBase; bucket = 'relative';
   } else if (due.includes('this weekend')) {
-    const saturday = addDays(today, (6 - today.getDay()) % 7);
-    resolvedDate = saturday; bucket = 'thisWeekend';
+    resolvedDate = addDays(createdBase, (6 - createdBase.getDay()) % 7); bucket = 'thisWeekend';
   } else if (due.includes('next weekend')) {
-    const nextSaturday = addDays(today, ((6 - today.getDay()) % 7) + 7);
-    resolvedDate = nextSaturday; bucket = 'nextWeekend';
+    resolvedDate = addDays(createdBase, ((6 - createdBase.getDay()) % 7) + 7); bucket = 'nextWeekend';
   } else if (due.includes('this week')) {
-    resolvedDate = endOfWeek(today); bucket = 'thisWeek';
+    resolvedDate = endOfWeek(createdBase); bucket = 'thisWeek';
   } else if (due.includes('next week')) {
-    resolvedDate = addDays(endOfWeek(today), 7); bucket = 'nextWeek';
+    resolvedDate = addDays(endOfWeek(createdBase), 7); bucket = 'nextWeek';
   } else if (weekdayMatch) {
     const targetDow = weekdayMap[weekdayMatch[1]];
-    const created = task && task.created_at ? startOfDay(new Date(task.created_at)) : today;
-    const createdDow = created.getDay();
+    const createdDow = createdBase.getDay();
     const delta = (targetDow - createdDow + 7) % 7;
-    resolvedDate = addDays(created, delta);
+    resolvedDate = addDays(createdBase, delta);
     bucket = 'weekday';
   }
 
-  const isToday = resolvedDate ? sameDay(resolvedDate, today) : due.includes('today') || due.includes('tonight');
-  const isTomorrow = resolvedDate ? sameDay(resolvedDate, tomorrow) : due.includes('tomorrow');
+  const isToday = resolvedDate ? sameDay(resolvedDate, today) : false;
+  const isTomorrow = resolvedDate ? sameDay(resolvedDate, addDays(today, 1)) : false;
 
   let display = raw;
   let isOverdue = false;
@@ -1600,6 +1597,11 @@ function bindDevConsoleControls() {
 
 window.addEventListener('DOMContentLoaded', bindDevConsoleControls);
 
+$('devDateInput').addEventListener('change', () => {
+  const value = $('devDateInput').value;
+  if (value) setDevTestDate(value);
+});
+
 setSelectedOwner(selectedOwner);
 render();
 init();
@@ -1619,7 +1621,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v34</div>
+    <div class="dev-meta" id="devMeta">Build: v35</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1648,7 +1650,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v34</div>
+">v35</div>
 
 </body>
 </html>
