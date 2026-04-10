@@ -1209,10 +1209,26 @@ function normalizeTask(task) {
   return Object.assign(base, {panel});
 }
 
-async function loadTasks(silent=false) {
-  const result = await supabase.from('tasks').select('*').eq('household_id', HOUSEHOLD_ID).order('created_at', { ascending: false });
+async function loadTasks(silent=false, options={}) {
+  const includeArchived = !!options.includeArchived;
+  let query = supabase
+    .from('tasks')
+    .select('*')
+    .eq('household_id', HOUSEHOLD_ID)
+    .order('created_at', { ascending: false });
+
+  if (!includeArchived) {
+    query = query
+      .or('archived.is.null,archived.eq.false')
+      .is('archived_at', null);
+  }
+
+  const result = await query;
   if (result.error) throw result.error;
   tasks = (result.data || []).map(normalizeTask);
+  if (!includeArchived) {
+    tasks = tasks.filter(t => !t.archived);
+  }
   lastLoadSucceeded = true;
   render();
   refreshDevConsole();
@@ -1226,7 +1242,7 @@ async function runRefresh(reason='manual') {
   }
   refreshInFlight = (async () => {
     try {
-      await loadTasks(true);
+      await loadTasks(true, { includeArchived: settings.showArchive });
     } catch (e) {
       console.error(`Task refresh failed (${reason})`, e);
       throw e;
@@ -1252,6 +1268,10 @@ async function requestConsistencyRefresh(reason='consistency') {
 
 function upsertTaskInMemory(task) {
   const normalized = normalizeTask(task);
+  if (normalized.archived && !settings.showArchive) {
+    removeTaskInMemory(normalized.id);
+    return;
+  }
   const idx = tasks.findIndex(t => t.id === normalized.id);
   if (idx === -1) tasks.unshift(normalized);
   else tasks[idx] = normalized;
@@ -1797,7 +1817,22 @@ $('tutorialNextBtn').addEventListener('click', () => {
 tutorialBackdrop.addEventListener('click', e => { if (e.target === tutorialBackdrop) closeTutorial(true); });
 $('clearNotesBtn').addEventListener('click', () => { notesBox.value=''; localStorage.removeItem(NOTES_KEY); });
 $('archiveDoneBtn').addEventListener('click', archiveDoneTasks);
-$('showArchiveBtn').addEventListener('click', () => { settings.showArchive = !settings.showArchive; saveSettings(); render(); });
+$('showArchiveBtn').addEventListener('click', async () => {
+  settings.showArchive = !settings.showArchive;
+  saveSettings();
+  if (settings.showArchive) {
+    try {
+      await loadTasks(true, { includeArchived: true });
+      updateStatus();
+    } catch (err) {
+      console.error('Could not load archived tasks', err);
+    }
+    return;
+  }
+  tasks = tasks.filter(t => !t.archived);
+  render();
+  updateStatus();
+});
 $('readingFontBtn').addEventListener('click', () => { settings.readingFont = !settings.readingFont; saveSettings(); });
 $('focusModeBtn').addEventListener('click', () => { settings.focusMode = !settings.focusMode; saveSettings(); render(); });
 $('undoVoiceBtn').addEventListener('click', undoLastVoiceAdd);
@@ -1815,7 +1850,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('visibilitychange', async () => {
   if (!document.hidden && supabase) {
     try {
-      await loadTasks(true);
+      await loadTasks(true, { includeArchived: settings.showArchive });
       updateStatus();
     } catch (err) {
       console.error(err);
