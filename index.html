@@ -450,6 +450,11 @@ const tutorialBackdrop = $('tutorialBackdrop');
 
 let selectedOwner='Wes', editingTaskId=null, tasks=[], supabase=null, channel=null;
 let pollTimer=null, lastLoadSucceeded=false, realtimeHealthy=false;
+let pollIntervalMs = 0;
+let refreshInFlight = null;
+let refreshQueued = false;
+const HEALTHY_POLL_MS = 600000;
+const DEGRADED_POLL_MS = 90000;
 let panelState = loadPanelState();
 let filters = { search:'', tag:'', time:'' };
 let filterPanelOpen = false;
@@ -491,7 +496,7 @@ function savePanelState() { localStorage.setItem(PANEL_STATE_KEY, JSON.stringify
 function setStatus(text){ syncStatus.textContent='Sync status: ' + text; }
 function updateStatus() {
   if (realtimeHealthy) setStatus('connected');
-  else if (lastLoadSucceeded) setStatus('polling fallback active');
+  else if (lastLoadSucceeded) setStatus(`polling fallback active (${Math.round((pollIntervalMs || DEGRADED_POLL_MS)/1000)}s)`);
   else setStatus('loading tasks…');
 }
 function esc(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
@@ -513,7 +518,7 @@ function refreshDevConsole() {
   const dateStatus = $('devDateStatus');
   const taskStats = $('devTaskStats');
   const input = $('devDateInput');
-  if (meta) meta.textContent = `Build: v40 • Visible version badge should say v40`;
+  if (meta) meta.textContent = `Build: v41 • Visible version badge should say v41`;
   if (input) input.value = devDateValue();
   const n = now();
   const today = new Date(n); today.setHours(0,0,0,0);
@@ -1197,35 +1202,56 @@ function nextPanel(panel) {
   }
 }
 
+function normalizeTask(task) {
+  const base = Object.assign({archived:false, archived_at:null, recurrence:''}, task);
+  let panel = base.archived ? 'archived' : base.panel;
+  if (!base.archived && panel === 'upcoming' && !String(base.due_text || '').trim()) panel = 'backlog';
+  return Object.assign(base, {panel});
+}
+
 async function loadTasks(silent=false) {
   const result = await supabase.from('tasks').select('*').eq('household_id', HOUSEHOLD_ID).order('created_at', { ascending: false });
   if (result.error) throw result.error;
-  tasks = (result.data || []).map(t => {
-    const base = Object.assign({archived:false, archived_at:null, recurrence:''}, t);
-    let panel = base.archived ? 'archived' : base.panel;
-    if (!base.archived && panel === 'upcoming' && !String(base.due_text || '').trim()) panel = 'backlog';
-    return Object.assign(base, {panel});
-  });
+  tasks = (result.data || []).map(normalizeTask);
   lastLoadSucceeded = true;
   render();
   refreshDevConsole();
   if (!silent) updateStatus();
 }
 
+async function runRefresh(reason='manual') {
+  if (refreshInFlight) {
+    refreshQueued = true;
+    return refreshInFlight;
+  }
+  refreshInFlight = (async () => {
+    try {
+      await loadTasks(true);
+    } catch (e) {
+      console.error(`Task refresh failed (${reason})`, e);
+      throw e;
+    } finally {
+      refreshInFlight = null;
+      const shouldReplay = refreshQueued;
+      refreshQueued = false;
+      if (shouldReplay) {
+        setTimeout(() => { runRefresh('queued').catch(err => console.error('Queued refresh failed', err)); }, 250);
+      }
+    }
+  })();
+  return refreshInFlight;
+}
 
-async function forceRefreshSequence() {
-  try { await loadTasks(true); } catch (e) { console.error('Immediate refresh failed', e); }
-  setTimeout(async () => { try { await loadTasks(true); } catch (e) { console.error('500ms refresh failed', e); } }, 500);
-  setTimeout(async () => { try { await loadTasks(true); } catch (e) { console.error('2000ms refresh failed', e); } }, 2000);
+async function requestConsistencyRefresh(reason='consistency') {
+  try {
+    await runRefresh(reason);
+  } catch (e) {
+    console.error(`Consistency refresh failed (${reason})`, e);
+  }
 }
 
 function upsertTaskInMemory(task) {
-  const normalized = (() => {
-    const base = Object.assign({archived:false, archived_at:null}, task);
-    let panel = base.archived ? 'archived' : base.panel;
-    if (!base.archived && panel === 'upcoming' && !String(base.due_text || '').trim()) panel = 'backlog';
-    return Object.assign(base, {panel});
-  })();
+  const normalized = normalizeTask(task);
   const idx = tasks.findIndex(t => t.id === normalized.id);
   if (idx === -1) tasks.unshift(normalized);
   else tasks[idx] = normalized;
@@ -1238,11 +1264,20 @@ function removeTaskInMemory(id) {
   render();
 }
 
+function computePollIntervalMs() {
+  return realtimeHealthy ? HEALTHY_POLL_MS : DEGRADED_POLL_MS;
+}
+
 function startPolling() {
+  const nextInterval = computePollIntervalMs();
+  if (pollTimer && pollIntervalMs === nextInterval) return;
+  pollIntervalMs = nextInterval;
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(async () => {
-    try { await loadTasks(true); } catch (err) { console.error('Polling load failed', err); }
-  }, 3000);
+    try { await runRefresh('poll'); } catch (err) { console.error('Polling load failed', err); }
+  }, pollIntervalMs);
+  updateStatus();
+  refreshDevConsole();
 }
 
 async function addQuickTask(options = {}) {
@@ -1276,7 +1311,7 @@ async function addQuickTask(options = {}) {
     return;
   }
   upsertTaskInMemory(result.data);
-  try { await forceRefreshSequence(); } catch (e) {}
+  void requestConsistencyRefresh('write');
   quickInput.value = '';
   quickInput.focus();
   setVoiceStatus(source === 'voice' ? 'Voice task added.' : 'Task added.');
@@ -1303,7 +1338,7 @@ async function moveTaskToNext(taskId) {
     if (next === 'done' && movedTask.recurrence) {
       try { await createNextRecurringTask(movedTask); } catch (e) { console.error('Recurring create failed', e); }
     }
-    try { await forceRefreshSequence(); } catch (e) {}
+    void requestConsistencyRefresh('write');
   }
   else alert('Could not move task: task update did not return a row.');
 }
@@ -1324,7 +1359,7 @@ async function handleCardAction(e) {
       if (completedTask.recurrence) {
         try { await createNextRecurringTask(completedTask); } catch (e) { console.error('Recurring create failed', e); }
       }
-      try { await forceRefreshSequence(); } catch (e) {}
+      void requestConsistencyRefresh('write');
     }
     else alert('Could not update task: task update did not return a row.');
     return;
@@ -1336,7 +1371,7 @@ async function handleCardAction(e) {
     if (result.error) alert('Could not reopen task: ' + result.error.message);
     else if (result.data && result.data[0]) {
       upsertTaskInMemory(result.data[0]);
-      try { await forceRefreshSequence(); } catch (e) {}
+      void requestConsistencyRefresh('write');
     }
     else alert('Could not reopen task: task update did not return a row.');
     return;
@@ -1347,7 +1382,7 @@ async function handleCardAction(e) {
     if (result.error) alert('Could not restore task: ' + result.error.message);
     else if (result.data && result.data[0]) {
       upsertTaskInMemory(result.data[0]);
-      try { await forceRefreshSequence(); } catch (e) {}
+      void requestConsistencyRefresh('write');
     }
     else alert('Could not restore task: task update did not return a row.');
     return;
@@ -1495,7 +1530,7 @@ async function saveEdit() {
   }
   if (result.data && result.data[0]) {
     upsertTaskInMemory(result.data[0]);
-    try { await forceRefreshSequence(); } catch (e) {}
+    void requestConsistencyRefresh('write');
   } else {
     alert('Could not save task: task update did not return a row.');
     return;
@@ -1522,7 +1557,7 @@ async function archiveDoneTasks() {
     return;
   }
   (result.data || []).forEach(upsertTaskInMemory);
-  try { await forceRefreshSequence(); } catch (e) {}
+  void requestConsistencyRefresh('write');
   settings.showArchive = true;
   saveSettings();
   render();
@@ -1536,21 +1571,33 @@ function connectRealtime() {
       schema:'public',
       table:'tasks',
       filter:`household_id=eq.${HOUSEHOLD_ID}`
-    }, async () => {
+    }, payload => {
       try {
-        await forceRefreshSequence();
-        realtimeHealthy = true;
+        if (payload.eventType === 'DELETE') {
+          removeTaskInMemory(payload.old?.id);
+        } else if (payload.new) {
+          upsertTaskInMemory(payload.new);
+        } else {
+          void requestConsistencyRefresh('realtime-fallback');
+        }
+        if (!realtimeHealthy) {
+          realtimeHealthy = true;
+          startPolling();
+        }
         updateStatus();
       } catch (err) {
-        console.error(err);
-        setTimeout(async () => {
-          try { await loadTasks(true); } catch (e) { console.error('Realtime retry failed', e); }
-        }, 750);
+        console.error('Realtime patch failed', err);
+        void requestConsistencyRefresh('realtime-error');
       }
     })
     .subscribe(status => {
-      if (status === 'SUBSCRIBED') realtimeHealthy = true;
-      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') realtimeHealthy = false;
+      if (status === 'SUBSCRIBED') {
+        realtimeHealthy = true;
+        startPolling();
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        realtimeHealthy = false;
+        startPolling();
+      }
       updateStatus();
     });
 }
@@ -1583,7 +1630,7 @@ async function undoLastVoiceAdd() {
     return;
   }
   removeTaskInMemory(taskId);
-  try { await forceRefreshSequence(); } catch (e) {}
+  void requestConsistencyRefresh('write');
   setVoiceStatus('Voice task removed.');
 }
 
@@ -1864,7 +1911,7 @@ if ('serviceWorker' in navigator) {
 <div id="devConsole" class="dev-console" aria-hidden="true">
   <h3>Dev Console</h3>
   <div class="dev-grid">
-    <div class="dev-meta" id="devMeta">Build: v40</div>
+    <div class="dev-meta" id="devMeta">Build: v41</div>
     <div class="dev-row">
       <input id="devDateInput" type="date" />
       <button id="devSetDateBtn" type="button" class="small-btn">Set test date</button>
@@ -1893,7 +1940,7 @@ touch-action: manipulation;
 user-select: none;
 -webkit-user-select: none;
 -webkit-touch-callout: none;
-">v40</div>
+">v41</div>
 
 </body>
 </html>
